@@ -1,0 +1,8 @@
+*.o
+*.mod
+*.ok
+*.txt
+slurm*
+*.x
+*.optrpt
+*.eo
