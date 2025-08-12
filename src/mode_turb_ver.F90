@@ -226,15 +226,15 @@ USE MODD_NEB_n,          ONLY: NEB_t
 USE MODE_GRADIENT_M_PHY,       ONLY: GZ_M_W_PHY
 USE MODE_IO_FIELD_WRITE_PHY,       ONLY: IO_FIELD_WRITE_PHY
 USE MODE_PRANDTL,              ONLY: PSI_SV, PSI3, PHI3, PRANDTL
-USE MODE_SBL_DEPTH,            ONLY: SBL_DEPTH
+!#USE MODE_SBL_DEPTH,            ONLY: SBL_DEPTH
 USE MODE_TURB_VER_DYN_FLUX,    ONLY: TURB_VER_DYN_FLUX
-USE MODE_TURB_VER_SV_FLUX,     ONLY: TURB_VER_SV_FLUX
-USE MODE_TURB_VER_SV_CORR,     ONLY: TURB_VER_SV_CORR
+!#USE MODE_TURB_VER_SV_FLUX,     ONLY: TURB_VER_SV_FLUX
+!#USE MODE_TURB_VER_SV_CORR,     ONLY: TURB_VER_SV_CORR
 USE MODE_TURB_VER_THERMO_FLUX, ONLY: TURB_VER_THERMO_FLUX
 USE MODE_TURB_VER_THERMO_CORR, ONLY: TURB_VER_THERMO_CORR
 !
 USE MODI_LES_MEAN_SUBGRID_PHY
-USE MODI_SECOND_MNH
+!#USE MODI_SECOND_MNH
 !
 IMPLICIT NONE
 !
@@ -494,15 +494,15 @@ CALL PSI_SV(D,CSTURB,TURBN,KSV,ZREDTH1,ZREDR1,ZREDS1,ZRED2THS,ZRED2RS,ZPHI3,ZPSI
 !
 ! LES diagnostics
 !
-IF (TLES%LLES_CALL) THEN
-  CALL SECOND_MNH(ZTIME1)
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZPHI3,TLES%X_LES_SUBGRID_PHI3)
-  IF(KRR/=0) THEN
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZPSI3,TLES%X_LES_SUBGRID_PSI3)
-  END IF
-  CALL SECOND_MNH(ZTIME2)
-  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
-END IF
+!#IF (TLES%LLES_CALL) THEN
+!#  CALL SECOND_MNH(ZTIME1)
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZPHI3,TLES%X_LES_SUBGRID_PHI3)
+!#  IF(KRR/=0) THEN
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZPSI3,TLES%X_LES_SUBGRID_PSI3)
+!#  END IF
+!#  CALL SECOND_MNH(ZTIME2)
+!#  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
+!#END IF
 !----------------------------------------------------------------------------
 !
 !
@@ -597,27 +597,28 @@ CALL  TURB_VER_DYN_FLUX(D,CST,CSTURB,TURBN,TLES,KSV,O2D,OFLAT,      &
 !
 IF (TURBN%LHARAT) ZLM(:,:)=PLENGTHH(:,:)
 !
-IF (KSV>0)                                                          &
-CALL  TURB_VER_SV_FLUX(D,CST,CSTURB,TURBN,TLES,ONOMIXLG,            &
-                      KSV,KSV_LGBEG,KSV_LGEND,                      &
-                      OBLOWSNOW,OFLYER,                             &
-                      PEXPL,PTSTEP,TPFILE,PRSNOW,                   &
-                      PDZZ,PDIRCOSZW,                               &
-                      PRHODJ,PWM,                                   &
-                      PSFSVM,PSFSVP,                                &
-                      PSVM,                                         &
-                      PTKEM,ZLM,MFMOIST,ZPSI_SV,                    &
-                      PRSVS,PWSV                                    )
-!
-!
-IF (KSV>0 .AND. TLES%LLES_CALL)                                          &
-CALL  TURB_VER_SV_CORR(D,CST,CSTURB,TURBN,TLES,KRR,KRRL,KRRI,OOCEAN,&
-                      PDZZ,KSV,KSV_LGBEG,KSV_LGEND,ONOMIXLG,        &
-                      OBLOWSNOW,OCOMPUTE_SRC,PRSNOW,                &
-                      PTHLM,PRM,PTHVREF,                            &
-                      PLOCPEXNM,PATHETA,PAMOIST,PSRCM,ZPHI3,ZPSI3,  &
-                      PWM,PSVM,                                     &
-                      PTKEM,ZLM,PLEPS,ZPSI_SV                       )
+!# KSV = 0
+!#IF (KSV>0)                                                          &
+!#CALL  TURB_VER_SV_FLUX(D,CST,CSTURB,TURBN,TLES,ONOMIXLG,            &
+!#                      KSV,KSV_LGBEG,KSV_LGEND,                      &
+!#                      OBLOWSNOW,OFLYER,                             &
+!#                      PEXPL,PTSTEP,TPFILE,PRSNOW,                   &
+!#                      PDZZ,PDIRCOSZW,                               &
+!#                      PRHODJ,PWM,                                   &
+!#                      PSFSVM,PSFSVP,                                &
+!#                      PSVM,                                         &
+!#                      PTKEM,ZLM,MFMOIST,ZPSI_SV,                    &
+!#                      PRSVS,PWSV                                    )
+!#!
+!#!
+!#IF (KSV>0 .AND. TLES%LLES_CALL)                                          &
+!#CALL  TURB_VER_SV_CORR(D,CST,CSTURB,TURBN,TLES,KRR,KRRL,KRRI,OOCEAN,&
+!#                      PDZZ,KSV,KSV_LGBEG,KSV_LGEND,ONOMIXLG,        &
+!#                      OBLOWSNOW,OCOMPUTE_SRC,PRSNOW,                &
+!#                      PTHLM,PRM,PTHVREF,                            &
+!#                      PLOCPEXNM,PATHETA,PAMOIST,PSRCM,ZPHI3,ZPSI3,  &
+!#                      PWM,PSVM,                                     &
+!#                      PTKEM,ZLM,PLEPS,ZPSI_SV                       )
 !
 !
 !----------------------------------------------------------------------------
@@ -625,7 +626,7 @@ CALL  TURB_VER_SV_CORR(D,CST,CSTURB,TURBN,TLES,KRR,KRRL,KRRI,OOCEAN,&
 !*       9.   DIAGNOSTIC OF Surface Boundary Layer Depth
 !             ------------------------------------------
 !
-IF (TURBN%LRMC01) CALL SBL_DEPTH(D,CSTURB,PZZ,ZWU,ZWV,ZWTHV,PLMO,PSBL_DEPTH)
+!#IF (TURBN%LRMC01) CALL SBL_DEPTH(D,CSTURB,PZZ,ZWU,ZWV,ZWTHV,PLMO,PSBL_DEPTH)
 !
 !----------------------------------------------------------------------------
 !

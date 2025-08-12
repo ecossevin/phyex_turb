@@ -947,7 +947,7 @@ END SUBROUTINE MZF_PHY
 !
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
 USE MODD_PARAMETERS, ONLY: JPHEXT
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 
 !
 IMPLICIT NONE
@@ -975,7 +975,7 @@ INTEGER :: JJ,IJU
 !*       1.    DEFINITION OF DXF
 !              ------------------
 !
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXF2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXF2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 
 !
 !-------------------------------------------------------------------------------
@@ -1121,7 +1121,7 @@ END SUBROUTINE DZF_PHY
 !
 USE MODD_PARAMETERS, ONLY: JPHEXT
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1132,23 +1132,23 @@ TYPE(DIMPHYEX_t),       INTENT(IN)  :: D
 REAL, DIMENSION(D%NIT,D%NJT),  INTENT(IN)                :: PA     ! variable at mass
                                                             ! localization
 REAL, DIMENSION(D%NIT,D%NJT), INTENT(OUT) :: PDXM   ! result at flux
-                                                            ! side
-!
-!*       0.2   Declarations of local variables
-!              -------------------------------
-!
-!
-INTEGER :: JI             ! Loop index in x direction
-INTEGER :: IIU            ! upper bound in x direction of PA 
-!             
-INTEGER :: JJ,IJU
-!            
-!-------------------------------------------------------------------------------
-!
-!*       1.    DEFINITION OF DXM
-!              ------------------
-!
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXM2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#                                                            ! side
+!#!
+!#!*       0.2   Declarations of local variables
+!#!              -------------------------------
+!#!
+!#!
+!#INTEGER :: JI             ! Loop index in x direction
+!#INTEGER :: IIU            ! upper bound in x direction of PA 
+!#!             
+!#INTEGER :: JJ,IJU
+!#!            
+!#!-------------------------------------------------------------------------------
+!#!
+!#!*       1.    DEFINITION OF DXM
+!#!              ------------------
+!#!
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXM2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !
 !-------------------------------------------------------------------------------
 !
@@ -1206,7 +1206,7 @@ END SUBROUTINE DXM2D_PHY
 !
 USE MODD_PARAMETERS, ONLY: JPHEXT
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1240,7 +1240,7 @@ DO JJ=2,IJU
 END DO
 !
 PDYM(:,1,:)    =  PDYM(:,IJU-2*JPHEXT+1,:)
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYM_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYM_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !
 !-------------------------------------------------------------------------------
 !
@@ -1253,7 +1253,7 @@ END SUBROUTINE DYM_PHY
 !
 USE MODD_PARAMETERS, ONLY: JPHEXT
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1265,7 +1265,7 @@ REAL, DIMENSION(D%NIT,D%NJT),  INTENT(IN)                :: PA     ! variable at
                                                             ! localization
 REAL, DIMENSION(D%NIT,D%NJT), INTENT(OUT) :: PDYM   ! result at flux
 
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYM2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYM2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 
 END SUBROUTINE DYM2D_PHY
 
@@ -1321,7 +1321,7 @@ END SUBROUTINE DYM2D_PHY
 !
 USE MODD_PARAMETERS, ONLY: JPHEXT
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1355,7 +1355,7 @@ END DO
 !
 PDXM(1,:,:)    =  PDXM(IIU-2*JPHEXT+1,:,:)
 !
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXM_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXM_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !-------------------------------------------------------------------------------
 !
 IF (LHOOK) CALL DR_HOOK('DXM',1,ZHOOK_HANDLE)
@@ -1411,7 +1411,7 @@ END SUBROUTINE DXM_PHY
 !              ------------
 !
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1428,7 +1428,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT), INTENT(OUT) :: PDXF   ! result at mass
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 IF (LHOOK) CALL DR_HOOK('DXF',0,ZHOOK_HANDLE)
 !
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXF_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DXF_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !
 !-------------------------------------------------------------------------------
 !
@@ -1486,7 +1486,7 @@ END SUBROUTINE DXF_PHY
 !              ------------
 !
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1506,7 +1506,7 @@ REAL, DIMENSION(D%NIT,D%NJT,D%NKT), INTENT(OUT) :: PDYF   ! result at mass
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE
 IF (LHOOK) CALL DR_HOOK('DYF',0,ZHOOK_HANDLE)
 !
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYF_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYF_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !
 !-------------------------------------------------------------------------------
 !
@@ -1567,7 +1567,7 @@ END SUBROUTINE DYF_PHY
 !
 USE MODD_DIMPHYEX, ONLY: DIMPHYEX_t
 USE MODD_PARAMETERS, ONLY: JPHEXT
-USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_MSG, ONLY: PRINT_MSG, NVERB_FATAL
 !
 IMPLICIT NONE
 !
@@ -1594,7 +1594,7 @@ INTEGER :: IIU
 !*       1.    DEFINITION OF DYF
 !              ------------------
 !
-CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYF2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
+!#CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'DYF2D_PHY', 'AROME SHOULD NOT CALLED HORIZONTAL FINITE DIFFERENCE')
 !
 !-------------------------------------------------------------------------------
 !

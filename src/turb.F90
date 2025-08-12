@@ -268,19 +268,19 @@ USE MODE_GRADIENT_W_PHY,      ONLY: GZ_W_M_PHY
 USE MODE_GRADIENT_M_PHY,      ONLY: GZ_M_W_PHY
 USE MODE_IBM_MIXINGLENGTH,    ONLY: IBM_MIXINGLENGTH
 USE MODE_IO_FIELD_WRITE_PHY,      ONLY: IO_FIELD_WRITE_PHY
-USE MODE_RMC01,               ONLY: RMC01
-USE MODE_ROTATE_WIND,         ONLY: ROTATE_WIND, UPDATE_ROTATE_WIND
+!#USE MODE_RMC01,               ONLY: RMC01
+!#USE MODE_ROTATE_WIND,         ONLY: ROTATE_WIND, UPDATE_ROTATE_WIND
 USE MODE_SBL_PHY,             ONLY: LMO
 USE MODE_SOURCES_NEG_CORRECT, ONLY: SOURCES_NEG_CORRECT_PHY
-USE MODE_TM06,                ONLY: TM06
+!#USE MODE_TM06,                ONLY: TM06
 USE MODE_TKE_EPS_SOURCES,     ONLY: TKE_EPS_SOURCES
-USE MODE_TURB_HOR_SPLT,       ONLY: TURB_HOR_SPLT
+!#USE MODE_TURB_HOR_SPLT,       ONLY: TURB_HOR_SPLT
 USE MODE_TURB_VER,            ONLY: TURB_VER
-USE MODE_UPDATE_LM,           ONLY: UPDATE_LM
-USE MODE_MSG,                 ONLY: PRINT_MSG, NVERB_FATAL
+!#USE MODE_UPDATE_LM,           ONLY: UPDATE_LM
+!#USE MODE_MSG,                 ONLY: PRINT_MSG, NVERB_FATAL
 !
 USE MODI_LES_MEAN_SUBGRID_PHY
-USE MODI_SECOND_MNH,          ONLY: SECOND_MNH
+!#USE MODI_SECOND_MNH,          ONLY: SECOND_MNH
 !
 ! These macro are handled by pft_tool.py --craybyPassDOCONCURRENT applied on Cray Rules
 #ifdef MNH_COMPILER_CCE
@@ -530,12 +530,12 @@ INTEGER :: ISV
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE,ZHOOK_HANDLE2
 IF (LHOOK) CALL DR_HOOK('TURB',0,ZHOOK_HANDLE)
 !
-IF (TURBN%LHARAT .AND. TURBN%CTURBDIM /= '1DIM') THEN
-  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU only implemented for option TURBN%CTURBDIM=1DIM!')
-ENDIF
-IF (TURBN%LHARAT .AND. TLES%LLES_CALL) THEN
-  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU not implemented for option LLES_CALL')
-ENDIF
+!#IF (TURBN%LHARAT .AND. TURBN%CTURBDIM /= '1DIM') THEN
+!#  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU only implemented for option TURBN%CTURBDIM=1DIM!')
+!#ENDIF
+!#IF (TURBN%LHARAT .AND. TLES%LLES_CALL) THEN
+!#  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU not implemented for option LLES_CALL')
+!#ENDIF
 !
 IKT=D%NKT
 IKTB=D%NKTB
@@ -943,23 +943,23 @@ DO JIJ=IIJB, IIJE
   ZLMO(JIJ)=XUNDEF
 END DO
 
-IF (TURBN%LRMC01) THEN
-
-  DO JIJ=IIJB, IIJE
-    ZUSTAR(JIJ)=(PSFU(JIJ)**2+PSFV(JIJ)**2)**(0.25)
-  END DO
-
-  IF (KRR>0) THEN
-    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRM(:,IKB,1),PSFTH,PSFRV,ZLMO)
-  ELSE
-  
-    ZRVM(:)=0.
-    ZSFRV(:)=0.
-    
-    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRVM,PSFTH,ZSFRV,ZLMO)
-  END IF
-  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,ZLM,ZLEPS)
-END IF
+!#IF (TURBN%LRMC01) THEN
+!#
+!#  DO JIJ=IIJB, IIJE
+!#    ZUSTAR(JIJ)=(PSFU(JIJ)**2+PSFV(JIJ)**2)**(0.25)
+!#  END DO
+!#
+!#  IF (KRR>0) THEN
+!#    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRM(:,IKB,1),PSFTH,PSFRV,ZLMO)
+!#  ELSE
+!#  
+!#    ZRVM(:)=0.
+!#    ZSFRV(:)=0.
+!#    
+!#    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRVM,PSFTH,ZSFRV,ZLMO)
+!#  END IF
+!#  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,ZLM,ZLEPS)
+!#END IF
 !
 !RMC01 is only applied on RM17 in HM21
 IF (TURBN%CTURBLEN=='HM21') THEN
@@ -975,9 +975,9 @@ END IF
 !*      3.8 Mixing length in external points (used if TURBN%CTURBDIM="3DIM")
 !           ----------------------------------------------------------
 !
-IF (TURBN%CTURBDIM=="3DIM") THEN
-  CALL UPDATE_LM(D,HLBCX,HLBCY,ZLM,ZLEPS)
-END IF
+!#IF (TURBN%CTURBDIM=="3DIM") THEN
+!#  CALL UPDATE_LM(D,HLBCX,HLBCY,ZLM,ZLEPS)
+!#END IF
 !
 !*      3.9 Mixing length correction if immersed walls
 !           ------------------------------------------
@@ -996,13 +996,13 @@ ENDIF
 !
 !
 IF (TURBN%LROTATE_WIND) THEN
-  CALL ROTATE_WIND(D,PUT,PVT,PWT,                       &
-                     PDIRCOSXW, PDIRCOSYW, PDIRCOSZW,   &
-                     PCOSSLOPE,PSINSLOPE,               &
-                     PDXX,PDYY,PDZZ,                    &
-                     ZUSLOPE,ZVSLOPE                    )
-  !
-  CALL UPDATE_ROTATE_WIND(D,ZUSLOPE,ZVSLOPE,HLBCX,HLBCY)
+!#  CALL ROTATE_WIND(D,PUT,PVT,PWT,                       &
+!#                     PDIRCOSXW, PDIRCOSYW, PDIRCOSZW,   &
+!#                     PCOSSLOPE,PSINSLOPE,               &
+!#                     PDXX,PDYY,PDZZ,                    &
+!#                     ZUSLOPE,ZVSLOPE                    )
+!#  !
+!#  CALL UPDATE_ROTATE_WIND(D,ZUSLOPE,ZVSLOPE,HLBCX,HLBCY)
 ELSE
 
   ZUSLOPE(IIJB:IIJE)=PUT(IIJB:IIJE,IKA)
@@ -1055,26 +1055,26 @@ ZMR2(:,:)  = 0.     ! w'r'2
 ZMTHR(:,:) = 0.     ! w'th'r'
 
 !
-IF (TURBN%CTOM=='TM06') THEN
-  CALL TM06(D,CST,PTHVREF,PBL_DEPTH,PZZ,PSFTH,ZMWTH,ZMTH2)
-  !
-  CALL GZ_M_W_PHY(D,ZMWTH,PDZZ,ZWORK1)    ! -d(w'2th' )/dz
-  CALL GZ_W_M_PHY(D,ZMTH2,PDZZ,ZWORK2)    ! -d(w'th'2 )/dz
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      ZFWTH(JIJ, JK) = -ZWORK1(JIJ, JK)
-      ZFTH2(JIJ, JK) = -ZWORK2(JIJ, JK)
-    END DO
-  END DO
-  !
-  ZFWTH(:,IKTE:) = 0.
-  ZFWTH(:,:IKTB) = 0.
-  ZFWR(:,:)  = 0.
-  ZFTH2(:,IKTE:) = 0.
-  ZFTH2(:,:IKTB) = 0.
-  ZFR2(:,:)  = 0.
-  ZFTHR(:,:) = 0.
-ELSE
+!#IF (TURBN%CTOM=='TM06') THEN
+!#  CALL TM06(D,CST,PTHVREF,PBL_DEPTH,PZZ,PSFTH,ZMWTH,ZMTH2)
+!#  !
+!#  CALL GZ_M_W_PHY(D,ZMWTH,PDZZ,ZWORK1)    ! -d(w'2th' )/dz
+!#  CALL GZ_W_M_PHY(D,ZMTH2,PDZZ,ZWORK2)    ! -d(w'th'2 )/dz
+!#  DO JK=1, IKT
+!#    DO JIJ=IIJB, IIJE
+!#      ZFWTH(JIJ, JK) = -ZWORK1(JIJ, JK)
+!#      ZFTH2(JIJ, JK) = -ZWORK2(JIJ, JK)
+!#    END DO
+!#  END DO
+!#  !
+!#  ZFWTH(:,IKTE:) = 0.
+!#  ZFWTH(:,:IKTB) = 0.
+!#  ZFWR(:,:)  = 0.
+!#  ZFTH2(:,IKTE:) = 0.
+!#  ZFTH2(:,:IKTB) = 0.
+!#  ZFR2(:,:)  = 0.
+!#  ZFTHR(:,:) = 0.
+!#ELSE
 
   ZFWTH(:,:) = 0.
   ZFWR(:,:)  = 0.
@@ -1082,7 +1082,7 @@ ELSE
   ZFR2(:,:)  = 0.
   ZFTHR(:,:) = 0.
 
-ENDIF
+!#ENDIF
 !
 !----------------------------------------------------------------------------
 !
@@ -1269,171 +1269,171 @@ END IF
 !  END DO
 !END IF
 !
-IF( TURBN%CTURBDIM == '3DIM' ) THEN
-!  IF( BUCONF%LBUDGET_U  ) CALL TBUDGETS(NBUDGET_U )%PTR%INIT_PHY(D, 'HTURB', PRUS  (:,:) )
-!  IF( BUCONF%LBUDGET_V  ) CALL TBUDGETS(NBUDGET_V )%PTR%INIT_PHY(D, 'HTURB', PRVS  (:,:) )
-!  IF( BUCONF%LBUDGET_W  ) CALL TBUDGETS(NBUDGET_W )%PTR%INIT_PHY(D, 'HTURB', PRWS  (:,:) )
-
-!  IF(BUCONF%LBUDGET_TH)  THEN
-!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!    
-!    DO JK=1, IKT
-!      DO JIJ=IIJB, IIJE
-!        ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
-!      END DO
-!    END DO
-!    
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE IF( KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:)  )
-!    ELSE
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', PRTHLS(:,:) )
-!    END IF
-!  END IF
-
-!  IF( BUCONF%LBUDGET_RV ) THEN
-!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE IF( KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 1) )
-!    END IF
-!  END IF
-
-!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 2) )
-!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
-
-!  IF( BUCONF%LBUDGET_SV )  THEN
-!    DO JSV = 1, KSV
-!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%INIT_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
-!    END DO
-!  END IF
-    CALL TURB_HOR_SPLT(D,CST,CSTURB, TURBN, NEBN, TLES,        &
-          KSPLIT, KRR, KRRL, KRRI, ISV,KSV_LGBEG,KSV_LGEND,    & 
-          PTSTEP,HLBCX,HLBCY, OFLAT,O2D, ONOMIXLG,             & 
-          GOCEAN,OCOMPUTE_SRC,OBLOWSNOW,PRSNOW,                &
-          TPFILE, KHALO,                                       &
-          PDXX,PDYY,PDZZ,PDZX,PDZY,PZZ,                        &
-          PDIRCOSXW,PDIRCOSYW,PDIRCOSZW,                       &
-          PCOSSLOPE,PSINSLOPE,                                 &
-          PRHODJ,PTHVREF,                                      &
-          PSFTH,PSFRV,ZWORKSFSV,                               &
-          ZCDUEFF,ZTAU11M,ZTAU12M,ZTAU22M,ZTAU33M,             &
-          PUT,PVT,PWT,ZUSLOPE,ZVSLOPE,PTHLT,PRT,ZWORKT,        &
-          PTKET,ZLM,ZLEPS,                                     &
-          ZLOCPEXNM,ZATHETA,ZAMOIST,PSRCT,ZFRAC_ICE,           &
-          PDP,PTP,PSIGS,                                       &
-          ZTRH,                                                &
-          PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS                    )
-  !
-!  IF (HCLOUD == 'LIMA') THEN
-!     IF (KSV_LIMA_NR.GT.0) PRSVS(:,:,KSV_LIMA_NR) = ZRSVS(:,:,KSV_LIMA_NR) 
-!     IF (KSV_LIMA_NS.GT.0) PRSVS(:,:,KSV_LIMA_NS) = ZRSVS(:,:,KSV_LIMA_NS)
-!     IF (KSV_LIMA_NG.GT.0) PRSVS(:,:,KSV_LIMA_NG) = ZRSVS(:,:,KSV_LIMA_NG) 
-!     IF (KSV_LIMA_NH.GT.0) PRSVS(:,:,KSV_LIMA_NH) = ZRSVS(:,:,KSV_LIMA_NH)
-!  END IF
-  !
-  IF (TURBN%LTURB_PRECIP) THEN
-!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
-    IF (KRR.GE.3) PRRS(:,:,3)=ZWORKS(:,:,KSV+3)
-    IF (KRR.GE.5) PRRS(:,:,5)=ZWORKS(:,:,KSV+5)
-    IF (KRR.GE.6) PRRS(:,:,6)=ZWORKS(:,:,KSV+6)
-    IF (KRR.GE.7) PRRS(:,:,7)=ZWORKS(:,:,KSV+7)
-!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
-  END IF
-  !
-
-!  IF( BUCONF%LBUDGET_TH ) THEN
-!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE IF( KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE
-!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', PRTHLS(:,:) )
-!    END IF
-!  END IF
-
-!  IF( BUCONF%LBUDGET_RV ) THEN
-!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE IF( KRRL >= 1 ) THEN
-!      
-!      DO JK=1, IKT
-!        DO JIJ=IIJB, IIJE
-!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
-!        END DO
-!      END DO
-!      
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!    ELSE
-!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 1) )
-!    END IF
-!  END IF
-
-!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 2) )
-!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
-
-!  IF( BUCONF%LBUDGET_SV )  THEN
-!    DO JSV = 1, KSV
-!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%END_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
-!    END DO
-!  END IF
-END IF
+!#IF( TURBN%CTURBDIM == '3DIM' ) THEN
+!#!  IF( BUCONF%LBUDGET_U  ) CALL TBUDGETS(NBUDGET_U )%PTR%INIT_PHY(D, 'HTURB', PRUS  (:,:) )
+!#!  IF( BUCONF%LBUDGET_V  ) CALL TBUDGETS(NBUDGET_V )%PTR%INIT_PHY(D, 'HTURB', PRVS  (:,:) )
+!#!  IF( BUCONF%LBUDGET_W  ) CALL TBUDGETS(NBUDGET_W )%PTR%INIT_PHY(D, 'HTURB', PRWS  (:,:) )
+!#
+!#!  IF(BUCONF%LBUDGET_TH)  THEN
+!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!#!    
+!#!    DO JK=1, IKT
+!#!      DO JIJ=IIJB, IIJE
+!#!        ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
+!#!      END DO
+!#!    END DO
+!#!    
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE IF( KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:)  )
+!#!    ELSE
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', PRTHLS(:,:) )
+!#!    END IF
+!#!  END IF
+!#
+!#!  IF( BUCONF%LBUDGET_RV ) THEN
+!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE IF( KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 1) )
+!#!    END IF
+!#!  END IF
+!#
+!#!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 2) )
+!#!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!#!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!#!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!#!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
+!#
+!#!  IF( BUCONF%LBUDGET_SV )  THEN
+!#!    DO JSV = 1, KSV
+!#!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%INIT_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
+!#!    END DO
+!#!  END IF
+!#    CALL TURB_HOR_SPLT(D,CST,CSTURB, TURBN, NEBN, TLES,        &
+!#          KSPLIT, KRR, KRRL, KRRI, ISV,KSV_LGBEG,KSV_LGEND,    & 
+!#          PTSTEP,HLBCX,HLBCY, OFLAT,O2D, ONOMIXLG,             & 
+!#          GOCEAN,OCOMPUTE_SRC,OBLOWSNOW,PRSNOW,                &
+!#          TPFILE, KHALO,                                       &
+!#          PDXX,PDYY,PDZZ,PDZX,PDZY,PZZ,                        &
+!#          PDIRCOSXW,PDIRCOSYW,PDIRCOSZW,                       &
+!#          PCOSSLOPE,PSINSLOPE,                                 &
+!#          PRHODJ,PTHVREF,                                      &
+!#          PSFTH,PSFRV,ZWORKSFSV,                               &
+!#          ZCDUEFF,ZTAU11M,ZTAU12M,ZTAU22M,ZTAU33M,             &
+!#          PUT,PVT,PWT,ZUSLOPE,ZVSLOPE,PTHLT,PRT,ZWORKT,        &
+!#          PTKET,ZLM,ZLEPS,                                     &
+!#          ZLOCPEXNM,ZATHETA,ZAMOIST,PSRCT,ZFRAC_ICE,           &
+!#          PDP,PTP,PSIGS,                                       &
+!#          ZTRH,                                                &
+!#          PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS                    )
+!#  !
+!#!  IF (HCLOUD == 'LIMA') THEN
+!#!     IF (KSV_LIMA_NR.GT.0) PRSVS(:,:,KSV_LIMA_NR) = ZRSVS(:,:,KSV_LIMA_NR) 
+!#!     IF (KSV_LIMA_NS.GT.0) PRSVS(:,:,KSV_LIMA_NS) = ZRSVS(:,:,KSV_LIMA_NS)
+!#!     IF (KSV_LIMA_NG.GT.0) PRSVS(:,:,KSV_LIMA_NG) = ZRSVS(:,:,KSV_LIMA_NG) 
+!#!     IF (KSV_LIMA_NH.GT.0) PRSVS(:,:,KSV_LIMA_NH) = ZRSVS(:,:,KSV_LIMA_NH)
+!#!  END IF
+!#  !
+!#  IF (TURBN%LTURB_PRECIP) THEN
+!#!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!#!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!#!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!#!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
+!#    IF (KRR.GE.3) PRRS(:,:,3)=ZWORKS(:,:,KSV+3)
+!#    IF (KRR.GE.5) PRRS(:,:,5)=ZWORKS(:,:,KSV+5)
+!#    IF (KRR.GE.6) PRRS(:,:,6)=ZWORKS(:,:,KSV+6)
+!#    IF (KRR.GE.7) PRRS(:,:,7)=ZWORKS(:,:,KSV+7)
+!#!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!#!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!#!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!#!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
+!#  END IF
+!#  !
+!#
+!#!  IF( BUCONF%LBUDGET_TH ) THEN
+!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE IF( KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE
+!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', PRTHLS(:,:) )
+!#!    END IF
+!#!  END IF
+!#
+!#!  IF( BUCONF%LBUDGET_RV ) THEN
+!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE IF( KRRL >= 1 ) THEN
+!#!      
+!#!      DO JK=1, IKT
+!#!        DO JIJ=IIJB, IIJE
+!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
+!#!        END DO
+!#!      END DO
+!#!      
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!#!    ELSE
+!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 1) )
+!#!    END IF
+!#!  END IF
+!#
+!#!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 2) )
+!#!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!#!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!#!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!#!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
+!#
+!#!  IF( BUCONF%LBUDGET_SV )  THEN
+!#!    DO JSV = 1, KSV
+!#!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%END_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
+!#!    END DO
+!#!  END IF
+!#END IF
 
 !----------------------------------------------------------------------------
 !
@@ -1760,113 +1760,113 @@ CALL SOURCES_NEG_CORRECT_PHY(D,KSV,HCLOUD,HELEC,'NETUR',KRR,PTSTEP,PPABST,PTHLT,
 !*      9. LES averaged surface fluxes
 !          ---------------------------
 !
-IF (TLES%LLES_CALL) THEN
-  CALL SECOND_MNH(ZTIME1)
-  
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFTH,TLES%X_LES_Q0)
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFRV,TLES%X_LES_E0)
-  DO JSV=1,KSV
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFSV(:,JSV),TLES%X_LES_SV0(:,JSV))
-  END DO
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFU,TLES%X_LES_UW0)
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFV,TLES%X_LES_VW0)
-  !
-  
-  DO JIJ=IIJB, IIJE
-    ZWORK2D(JIJ) = (PSFU(JIJ)*PSFU(JIJ)+PSFV(JIJ)*PSFV(JIJ))**0.25
-  END DO
-  
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2D,TLES%X_LES_USTAR)
-
-  !----------------------------------------------------------------------------
-  !
-  !*     10. LES for 3rd order moments
-  !          -------------------------
-  !
-
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWTH,TLES%X_LES_SUBGRID_W2Thl)
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTH2,TLES%X_LES_SUBGRID_WThl2)
-
-  IF (KRR>0) THEN
-
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWR,TLES%X_LES_SUBGRID_W2Rt)
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTHR,TLES%X_LES_SUBGRID_WThlRt)
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMR2,TLES%X_LES_SUBGRID_WRt2)
-
-  END IF
-  !
-  !----------------------------------------------------------------------------
-  !
-  !*     11. LES quantities depending on <w'2> in "1DIM" mode
-  !          ------------------------------------------------
-  !
-  IF (TURBN%CTURBDIM=="1DIM") THEN
-
-    DO JK=1, IKT
-      DO JIJ=IIJB, IIJE
-        ZWORK1(JIJ, JK) = 2./3.*PTKET(JIJ, JK)
-      END DO
-    END DO
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1,TLES%X_LES_SUBGRID_U2)
-    TLES%X_LES_SUBGRID_V2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
-    TLES%X_LES_SUBGRID_W2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
-    !
-    CALL GZ_M_W_PHY(D,PTHLT,PDZZ,ZWORK1)
-    CALL MZF_PHY(D,ZWORK1,ZWORK2)
-    DO JK=1, IKT
-      DO JIJ=IIJB, IIJE
-        ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-      END DO
-    END DO
-    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Thl_SBG_W2)
-
-    !
-    IF (KRR>=1) THEN
-
-      CALL GZ_M_W_PHY(D,PRT(:,:,1),PDZZ,ZWORK1)
-      CALL MZF_PHY(D,ZWORK1,ZWORK2)
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-        END DO
-      END DO
-      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Rt_SBG_W2)
-
-    END IF
-
-    DO JSV=1,KSV
-      CALL GZ_M_W_PHY(D,PSVT(:,:,JSV),PDZZ,ZWORK1)
-      CALL MZF_PHY(D,ZWORK1,ZWORK2)
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-        END DO
-      END DO
-      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2, TLES%X_LES_RES_ddz_Sv_SBG_W2(:,:,:,JSV))
-    END DO
-
-  END IF
-  !
-  !----------------------------------------------------------------------------
-  !
-  !*     12. LES mixing end dissipative lengths, presso-correlations
-  !          -------------------------------------------------------
-  !
-
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLM,TLES%X_LES_SUBGRID_LMix)
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_LDiss)
-  !
-  !* presso-correlations for subgrid Tke are equal to zero.
-  !
-
-  ZLEPS(:,:) = 0. !ZLEPS is used as a work array (not used anymore)
-
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_WP)
-
-  !
-  CALL SECOND_MNH(ZTIME2)
-  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
-END IF
+!#IF (TLES%LLES_CALL) THEN
+!#  CALL SECOND_MNH(ZTIME1)
+!#  
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFTH,TLES%X_LES_Q0)
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFRV,TLES%X_LES_E0)
+!#  DO JSV=1,KSV
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFSV(:,JSV),TLES%X_LES_SV0(:,JSV))
+!#  END DO
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFU,TLES%X_LES_UW0)
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFV,TLES%X_LES_VW0)
+!#  !
+!#  
+!#  DO JIJ=IIJB, IIJE
+!#    ZWORK2D(JIJ) = (PSFU(JIJ)*PSFU(JIJ)+PSFV(JIJ)*PSFV(JIJ))**0.25
+!#  END DO
+!#  
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2D,TLES%X_LES_USTAR)
+!#
+!#  !----------------------------------------------------------------------------
+!#  !
+!#  !*     10. LES for 3rd order moments
+!#  !          -------------------------
+!#  !
+!#
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWTH,TLES%X_LES_SUBGRID_W2Thl)
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTH2,TLES%X_LES_SUBGRID_WThl2)
+!#
+!#  IF (KRR>0) THEN
+!#
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWR,TLES%X_LES_SUBGRID_W2Rt)
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTHR,TLES%X_LES_SUBGRID_WThlRt)
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMR2,TLES%X_LES_SUBGRID_WRt2)
+!#
+!#  END IF
+!#  !
+!#  !----------------------------------------------------------------------------
+!#  !
+!#  !*     11. LES quantities depending on <w'2> in "1DIM" mode
+!#  !          ------------------------------------------------
+!#  !
+!#  IF (TURBN%CTURBDIM=="1DIM") THEN
+!#
+!#    DO JK=1, IKT
+!#      DO JIJ=IIJB, IIJE
+!#        ZWORK1(JIJ, JK) = 2./3.*PTKET(JIJ, JK)
+!#      END DO
+!#    END DO
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1,TLES%X_LES_SUBGRID_U2)
+!#    TLES%X_LES_SUBGRID_V2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
+!#    TLES%X_LES_SUBGRID_W2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
+!#    !
+!#    CALL GZ_M_W_PHY(D,PTHLT,PDZZ,ZWORK1)
+!#    CALL MZF_PHY(D,ZWORK1,ZWORK2)
+!#    DO JK=1, IKT
+!#      DO JIJ=IIJB, IIJE
+!#        ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+!#      END DO
+!#    END DO
+!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Thl_SBG_W2)
+!#
+!#    !
+!#    IF (KRR>=1) THEN
+!#
+!#      CALL GZ_M_W_PHY(D,PRT(:,:,1),PDZZ,ZWORK1)
+!#      CALL MZF_PHY(D,ZWORK1,ZWORK2)
+!#      DO JK=1, IKT
+!#        DO JIJ=IIJB, IIJE
+!#          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+!#        END DO
+!#      END DO
+!#      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Rt_SBG_W2)
+!#
+!#    END IF
+!#
+!#    DO JSV=1,KSV
+!#      CALL GZ_M_W_PHY(D,PSVT(:,:,JSV),PDZZ,ZWORK1)
+!#      CALL MZF_PHY(D,ZWORK1,ZWORK2)
+!#      DO JK=1, IKT
+!#        DO JIJ=IIJB, IIJE
+!#          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+!#        END DO
+!#      END DO
+!#      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2, TLES%X_LES_RES_ddz_Sv_SBG_W2(:,:,:,JSV))
+!#    END DO
+!#
+!#  END IF
+!#  !
+!#  !----------------------------------------------------------------------------
+!#  !
+!#  !*     12. LES mixing end dissipative lengths, presso-correlations
+!#  !          -------------------------------------------------------
+!#  !
+!#
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLM,TLES%X_LES_SUBGRID_LMix)
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_LDiss)
+!#  !
+!#  !* presso-correlations for subgrid Tke are equal to zero.
+!#  !
+!#
+!#  ZLEPS(:,:) = 0. !ZLEPS is used as a work array (not used anymore)
+!#
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_WP)
+!#
+!#  !
+!#  CALL SECOND_MNH(ZTIME2)
+!#  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
+!#END IF
 !
 IF(PRESENT(PLEM)) PLEM(IIJB:IIJE,IKTB:IKTE) = ZLM(IIJB:IIJE,IKTB:IKTE)
 !----------------------------------------------------------------------------
