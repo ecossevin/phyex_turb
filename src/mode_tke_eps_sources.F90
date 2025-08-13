@@ -4,7 +4,8 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_TKE_EPS_SOURCES
-IMPLICIT NONE
+!$ACDC singlecolumn 
+!$ACDC singlecolumnIMPLICIT NONE
 CONTAINS
       SUBROUTINE TKE_EPS_SOURCES(D,CST,CSTURB,TURBN,TLES,       &
                     & PTKEM,PLM,PLEPS,PDP,                             &

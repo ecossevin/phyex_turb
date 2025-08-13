@@ -4,7 +4,8 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_TURB_VER_THERMO_CORR
-IMPLICIT NONE
+!$ACDC singlecolumn 
+!$ACDC singlecolumnIMPLICIT NONE
 CONTAINS      
 SUBROUTINE TURB_VER_THERMO_CORR(D,CST,CSTURB,TURBN,NEBN,TLES,       &
                       KRR,KRRL,KRRI,KSV,                            &

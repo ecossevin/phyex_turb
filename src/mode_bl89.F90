@@ -3,7 +3,8 @@
 !MNH_LIC version 1. See LICENSE, CeCILL-C_V1-en.txt and CeCILL-C_V1-fr.txt
 !MNH_LIC for details. version 1.
 MODULE MODE_BL89
-IMPLICIT NONE
+!$ACDC singlecolumn 
+!$ACDC singlecolumnIMPLICIT NONE
 CONTAINS
 !     ######spl
       SUBROUTINE BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,PTHLM,KRR,PRM,PTKEM,PSHEAR,PLM,OOCEAN)

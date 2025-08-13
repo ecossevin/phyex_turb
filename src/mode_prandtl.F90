@@ -5,7 +5,8 @@
 !-----------------------------------------------------------------
 !    #################### 
      MODULE MODE_PRANDTL
-USE YOMHOOK , ONLY : LHOOK, DR_HOOK, JPHOOK
+!$ACDC singlecolumn 
+!$ACDC singlecolumnUSE YOMHOOK , ONLY : LHOOK, DR_HOOK, JPHOOK
 !    #################### 
 !
 !* modification 08/2010  V. Masson  smoothing of the discontinuity in functions 
