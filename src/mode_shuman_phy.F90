@@ -1,6 +1,6 @@
 MODULE MODE_SHUMAN_PHY
 !$ACDC singlecolumn 
-!$ACDC singlecolumnIMPLICIT NONE
+IMPLICIT NONE
 CONTAINS
 !     ###############################
       SUBROUTINE MYF_PHY(D,PA,PMYF)

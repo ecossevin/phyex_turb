@@ -33,6 +33,9 @@
               & PIBM_LS, PIBM_XMUT,                                   &
               & PCURRENT_TKE_DISS, PSSTFL, PSSTFL_C, PSSRFL_C,        &
               & PSSUFL_C, PSSVFL_C,PSSUFL,PSSVFL                      )
+
+!$ACDC singlecolumn --inline-contained
+
 !     #################################################################
 !
 !

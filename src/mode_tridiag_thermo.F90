@@ -4,7 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_TRIDIAG_THERMO
 !$ACDC singlecolumn 
-!$ACDC singlecolumnIMPLICIT NONE
+IMPLICIT NONE
 CONTAINS       
 SUBROUTINE TRIDIAG_THERMO(D,PVARM,PF,PDFDDTDZ,PTSTEP,PIMPL,  &
                                  PDZZ,PRHODJ,PVARP             )

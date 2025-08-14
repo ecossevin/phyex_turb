@@ -4,8 +4,8 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_TURB_VER_THERMO_FLUX
-!$ACDC singlecolumn 
-!$ACDC singlecolumnIMPLICIT NONE
+!###!$ACDC singlecolumn 
+IMPLICIT NONE
 CONTAINS
 SUBROUTINE TURB_VER_THERMO_FLUX(D,CST,CSTURB,TURBN,TLES,            &
                       KRR,KRRL,KRRI,KSV,KGRADIENTS,                 &

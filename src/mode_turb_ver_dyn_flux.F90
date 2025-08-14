@@ -3,8 +3,8 @@
 !MNH_LIC version 1. See LICENSE, CeCILL-C_V1-en.txt and CeCILL-C_V1-fr.txt
 !MNH_LIC for details. version 1.
 MODULE MODE_TURB_VER_DYN_FLUX
-!$ACDC singlecolumn 
-!$ACDC singlecolumnIMPLICIT NONE
+!###!$ACDC singlecolumn 
+IMPLICIT NONE
 CONTAINS
 SUBROUTINE TURB_VER_DYN_FLUX(D,CST,CSTURB,TURBN,TLES,KSV,O2D,OFLAT, &
                       KRR,OOCEAN,OCOUPLES,                          &
