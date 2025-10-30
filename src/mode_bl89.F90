@@ -3,13 +3,11 @@
 !MNH_LIC version 1. See LICENSE, CeCILL-C_V1-en.txt and CeCILL-C_V1-fr.txt
 !MNH_LIC for details. version 1.
 MODULE MODE_BL89
-!$ACDC singlecolumn 
 IMPLICIT NONE
 CONTAINS
 !     ######spl
       SUBROUTINE BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,PTHLM,KRR,PRM,PTKEM,PSHEAR,PLM,OOCEAN)
       USE YOMHOOK , ONLY : LHOOK, DR_HOOK, JPHOOK
-      USE PARKIND1, ONLY : JPRB
 !     #########################################################
 !
 !!****  *BL89* -
@@ -61,6 +59,7 @@ USE MODD_CST, ONLY: CST_t
 USE MODD_CTURB, ONLY: CSTURB_t
 USE MODD_TURB_n, ONLY: TURB_t
 USE MODD_DIMPHYEX,   ONLY: DIMPHYEX_t
+USE MODD_PRECISION, ONLY: MNHREAL
 !
 !
 IMPLICIT NONE
@@ -239,7 +238,7 @@ DO JK=1,IKT
 END DO
 ZLWORKUP(:,:) = 0.
 ZTMP(:)=0.
-!
+
 !
 !-------------------------------------------------------------------------------
 !
@@ -357,16 +356,18 @@ END IF
 !
 !*       7.  final mixing length
 !
+
 DO JK=IKTB,IKTE
   DO JIJ=IIJB,IIJE
-    ZLWORK1=MAX(PLMDN(JIJ,JK),1.E-10_JPRB)
-    ZLWORK2=MAX(ZLWORKUP(JIJ,JK),1.E-10_JPRB)
+    ZLWORK1=MAX(PLMDN(JIJ,JK),1.E-10_MNHREAL)
+    ZLWORK2=MAX(ZLWORKUP(JIJ,JK),1.E-10_MNHREAL)
     ZPOTE = ZLWORK1 / ZLWORK2
     ZLWORK2=1.d0 + ZPOTE**TURBN%XBL89EXP
     PLM(JIJ,JK) = ZLWORK1*(2./ZLWORK2)**TURBN%XUSRBL89
     PLM(JIJ,JK)=MAX(PLM(JIJ,JK),TURBN%XLINI)
   END DO
 END DO
+
 
 !-------------------------------------------------------------------------------
 !*       8.  end of the loop on the vertical levels

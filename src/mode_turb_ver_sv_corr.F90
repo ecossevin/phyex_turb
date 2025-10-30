@@ -141,7 +141,7 @@ IIJE=D%NIJE
 IIJB=D%NIJB
 IKT=D%NKT
 !
-!#CALL SECOND_MNH(ZTIME1)
+CALL SECOND_MNH(ZTIME1)
 !
 IF(OBLOWSNOW) THEN
 ! See Vionnet (PhD, 2012) for a complete discussion around the value of the Schmidt number for blowing snow variables          
@@ -150,96 +150,96 @@ ELSE
    ZCSV= TURBN%XCHF
 ENDIF
 !
-!#DO JSV=1,KSV
-!#  !
-!#  IF (ONOMIXLG .AND. JSV >= KSV_LGBEG .AND. JSV<= KSV_LGEND) CYCLE
-!#  !
-!#  ! variance Sv2
-!#  !
-!#  IF (TLES%LLES_CALL) THEN
-!#    ! approximation: diagnosed explicitely (without implicit term)
-!#    CALL GZ_M_W_PHY(D, PSVM(:,:,JSV),PDZZ(:, :), ZGZ_M_W2D_WORK1)
-!#
-!#DO JK=1, IKT
-!#  DO JIJ=IIJB, IIJE
-!#    ZFLXZ(JIJ, JK) =  PPSI_SV(JIJ, JK, JSV)*ZGZ_M_W2D_WORK1(JIJ, JK)**2    
-!#  END DO
-!#END DO
-!#
-!#!
-!#CALL MZF_PHY(D, ZFLXZ(:,:), ZMZF2D_WORK1)
-!#
-!#DO JK=1, IKT
-!#  DO JIJ=IIJB, IIJE
-!#    ZFLXZ(JIJ, JK) = ZCSV / ZCSVD * PLM(JIJ, JK) * PLEPS(JIJ, JK) * ZMZF2D_WORK1(JIJ, JK)    
-!#  END DO
-!#END DO
-!#
-!#!
-!#CALL LES_MEAN_SUBGRID_PHY(D,TLES, -2.*ZCSVD*SQRT(PTKEM)*ZFLXZ/PLEPS, TLES%X_LES_SUBGRID_DISS_Sv2(:,:,:,JSV) )
-!#    CALL MZF_PHY(D, PWM(:, :), ZMZF2D_WORK1)
-!#CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZMZF2D_WORK1(:, :)*ZFLXZ(:, :), TLES%X_LES_RES_W_SBG_Sv2(:,:,:,JSV) )  
-!#END IF
+DO JSV=1,KSV
+  !
+  IF (ONOMIXLG .AND. JSV >= KSV_LGBEG .AND. JSV<= KSV_LGEND) CYCLE
+  !
+  ! variance Sv2
+  !
+  IF (TLES%LLES_CALL) THEN
+    ! approximation: diagnosed explicitely (without implicit term)
+    CALL GZ_M_W_PHY(D, PSVM(:,:,JSV),PDZZ, ZGZ_M_W2D_WORK1)
+
+DO JK=1, IKT
+  DO JIJ=IIJB, IIJE
+    ZFLXZ(JIJ, JK) =  PPSI_SV(JIJ, JK, JSV)*ZGZ_M_W2D_WORK1(JIJ, JK)**2    
+  END DO
+END DO
+
+!
+CALL MZF_PHY(D, ZFLXZ, ZMZF2D_WORK1)
+
+DO JK=1, IKT
+  DO JIJ=IIJB, IIJE
+    ZFLXZ(JIJ, JK) = ZCSV / ZCSVD * PLM(JIJ, JK) * PLEPS(JIJ, JK) * ZMZF2D_WORK1(JIJ, JK)    
+  END DO
+END DO
+
+!
+CALL LES_MEAN_SUBGRID_PHY(D,TLES, -2.*ZCSVD*SQRT(PTKEM)*ZFLXZ/PLEPS, TLES%X_LES_SUBGRID_DISS_Sv2(:,:,:,JSV) )
+    CALL MZF_PHY(D, PWM, ZMZF2D_WORK1)
+CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZMZF2D_WORK1(:, :)*ZFLXZ(:, :), TLES%X_LES_RES_W_SBG_Sv2(:,:,:,JSV) )  
+END IF
   !
   ! covariance ThvSv
   !
-!#  IF (TLES%LLES_CALL) THEN
-!#    ! approximation: diagnosed explicitely (without implicit term)
-!#    CALL ETHETA(D,CST,KRR,KRRI,PTHLM,PRM,PLOCPEXNM,PATHETA,PSRCM,OOCEAN,OCOMPUTE_SRC,ZA)
-!#    !
-!#    CALL GZ_M_W_PHY(D,PTHLM,PDZZ,ZWORK1)
-!#    CALL GZ_M_W_PHY(D,PSVM(:,:,JSV),PDZZ,ZWORK2)
-!#    !
-!#    DO JK=1, IKT
-!#      DO JIJ=IIJB, IIJE
-!#        ZFLXZ(JIJ, JK)= ( TURBN%XCSHF * PPHI3(JIJ, JK) + ZCSV * PPSI_SV(JIJ, JK, JSV) ) &
-!#                      *  ZWORK1(JIJ, JK) *  ZWORK2(JIJ, JK)
-!#      END DO
-!#    END DO
-!#    !
-!#    CALL MZF_PHY(D,ZFLXZ,ZWORK3)
-!#    DO JK=1, IKT
-!#      DO JIJ=IIJB, IIJE
-!#        ZFLXZ(JIJ, JK)= PLM(JIJ, JK) * PLEPS(JIJ, JK) / (2.*ZCTSVD) * ZWORK3(JIJ, JK)
-!#        ZWORK1(JIJ, JK) = ZA(JIJ, JK)*ZFLXZ(JIJ, JK)
-!#        ZWORK2(JIJ, JK) = -CST%XG/PTHVREF(JIJ, JK)/3.*ZA(JIJ, JK)*ZFLXZ(JIJ, JK)    
-!#      END DO
-!#    END DO
-!#    !
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZWORK1, TLES%X_LES_SUBGRID_SvThv(:,:,:,JSV) )
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZWORK2, TLES%X_LES_SUBGRID_SvPz(:,:,:,JSV), .TRUE.)
-!#    !
-!#    IF (KRR>=1) THEN
-!#      CALL EMOIST(D,CST,KRR,KRRI,PTHLM,PRM,PLOCPEXNM,PAMOIST,PSRCM,OOCEAN,ZA)
-!#      CALL GZ_M_W_PHY(D, PRM(:,:,1),PDZZ(:, :), ZGZ_M_W2D_WORK1)
-!#CALL GZ_M_W_PHY(D, PSVM(:,:,JSV),PDZZ(:, :), ZGZ_M_W2D_WORK2)
-!#
-!#DO JK=1, IKT
-!#  DO JIJ=IIJB, IIJE
-!#    ZFLXZ(JIJ, JK)= ( ZCSV * PPSI3(JIJ, JK) + ZCSV * PPSI_SV(JIJ, JK, JSV) )             &
-!#                        *  ZGZ_M_W2D_WORK1(JIJ, JK)                 &
-!#                        *  ZGZ_M_W2D_WORK2(JIJ, JK)      
-!#  END DO
-!#END DO
-!#
-!#!
-!#CALL MZF_PHY(D, ZFLXZ(:, :), ZMZF2D_WORK1)
-!#
-!#DO JK=1, IKT
-!#  DO JIJ=IIJB, IIJE
-!#    ZFLXZ(JIJ, JK)= PLM(JIJ, JK) * PLEPS(JIJ, JK) / (2.*ZCQSVD) * ZMZF2D_WORK1(JIJ, JK)      
-!#  END DO
-!#END DO
-!#
-!#!
-!#CALL LES_MEAN_SUBGRID_PHY(D, TLES, ZA*ZFLXZ, TLES%X_LES_SUBGRID_SvThv(:,:,:,JSV) , .TRUE.)
-!#      CALL LES_MEAN_SUBGRID_PHY(D, TLES, -CST%XG/PTHVREF/3.*ZA*ZFLXZ, TLES%X_LES_SUBGRID_SvPz(:,:,:,JSV), .TRUE.)
-!#    END IF
-!#  END IF
-!#  !
-!#END DO   ! end of scalar loop 
+  IF (TLES%LLES_CALL) THEN
+    ! approximation: diagnosed explicitely (without implicit term)
+    CALL ETHETA(D,CST,KRR,KRRI,PTHLM,PRM,PLOCPEXNM,PATHETA,PSRCM,OOCEAN,OCOMPUTE_SRC,ZA)
+    !
+    CALL GZ_M_W_PHY(D,PTHLM,PDZZ,ZWORK1)
+    CALL GZ_M_W_PHY(D,PSVM(:,:,JSV),PDZZ,ZWORK2)
+    !
+    DO JK=1, IKT
+      DO JIJ=IIJB, IIJE
+        ZFLXZ(JIJ, JK)= ( TURBN%XCSHF * PPHI3(JIJ, JK) + ZCSV * PPSI_SV(JIJ, JK, JSV) ) &
+                      *  ZWORK1(JIJ, JK) *  ZWORK2(JIJ, JK)
+      END DO
+    END DO
+    !
+    CALL MZF_PHY(D,ZFLXZ,ZWORK3)
+    DO JK=1, IKT
+      DO JIJ=IIJB, IIJE
+        ZFLXZ(JIJ, JK)= PLM(JIJ, JK) * PLEPS(JIJ, JK) / (2.*ZCTSVD) * ZWORK3(JIJ, JK)
+        ZWORK1(JIJ, JK) = ZA(JIJ, JK)*ZFLXZ(JIJ, JK)
+        ZWORK2(JIJ, JK) = -CST%XG/PTHVREF(JIJ, JK)/3.*ZA(JIJ, JK)*ZFLXZ(JIJ, JK)    
+      END DO
+    END DO
+    !
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZWORK1, TLES%X_LES_SUBGRID_SvThv(:,:,:,JSV) )
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES, ZWORK2, TLES%X_LES_SUBGRID_SvPz(:,:,:,JSV), .TRUE.)
+    !
+    IF (KRR>=1) THEN
+      CALL EMOIST(D,CST,KRR,KRRI,PTHLM,PRM,PLOCPEXNM,PAMOIST,PSRCM,OOCEAN,ZA)
+      CALL GZ_M_W_PHY(D, PRM(:,:,1),PDZZ, ZGZ_M_W2D_WORK1)
+CALL GZ_M_W_PHY(D, PSVM(:,:,JSV),PDZZ, ZGZ_M_W2D_WORK2)
+
+DO JK=1, IKT
+  DO JIJ=IIJB, IIJE
+    ZFLXZ(JIJ, JK)= ( ZCSV * PPSI3(JIJ, JK) + ZCSV * PPSI_SV(JIJ, JK, JSV) )             &
+                        *  ZGZ_M_W2D_WORK1(JIJ, JK)                 &
+                        *  ZGZ_M_W2D_WORK2(JIJ, JK)      
+  END DO
+END DO
+
 !
-!#CALL SECOND_MNH(ZTIME2)
+CALL MZF_PHY(D, ZFLXZ, ZMZF2D_WORK1)
+
+DO JK=1, IKT
+  DO JIJ=IIJB, IIJE
+    ZFLXZ(JIJ, JK)= PLM(JIJ, JK) * PLEPS(JIJ, JK) / (2.*ZCQSVD) * ZMZF2D_WORK1(JIJ, JK)      
+  END DO
+END DO
+
+!
+CALL LES_MEAN_SUBGRID_PHY(D, TLES, ZA*ZFLXZ, TLES%X_LES_SUBGRID_SvThv(:,:,:,JSV) , .TRUE.)
+      CALL LES_MEAN_SUBGRID_PHY(D, TLES, -CST%XG/PTHVREF/3.*ZA*ZFLXZ, TLES%X_LES_SUBGRID_SvPz(:,:,:,JSV), .TRUE.)
+    END IF
+  END IF
+  !
+END DO   ! end of scalar loop 
+!
+CALL SECOND_MNH(ZTIME2)
 IF(TLES%LLES_CALL) TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
 !----------------------------------------------------------------------------
 !

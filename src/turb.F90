@@ -33,9 +33,6 @@
               & PIBM_LS, PIBM_XMUT,                                   &
               & PCURRENT_TKE_DISS, PSSTFL, PSSTFL_C, PSSRFL_C,        &
               & PSSUFL_C, PSSVFL_C,PSSUFL,PSSVFL                      )
-
-!$ACDC singlecolumn --inline-contained
-
 !     #################################################################
 !
 !
@@ -263,6 +260,11 @@ USE MODD_TURB_n,     ONLY: TURB_t
 USE MODD_NEB_n,      ONLY: NEB_t
 !
 USE MODE_BL89,                ONLY: BL89
+USE MODE_CLOUD_MODIF_LM,      ONLY: CLOUD_MODIF_LM
+USE MODE_COMPUTE_FUNCTION_THERMO_NEW_STAT, ONLY: COMPUTE_FUNCTION_THERMO_NEW_STAT
+USE MODE_COMPUTE_FUNCTION_THERMO, ONLY: COMPUTE_FUNCTION_THERMO
+USE MODE_DEAR,                ONLY: DEAR
+USE MODE_DELT,                ONLY: DELT
 USE MODE_EMOIST,              ONLY: EMOIST
 USE MODE_ETHETA,              ONLY: ETHETA
 USE MODE_GRADIENT_U_PHY,      ONLY: GZ_U_UW_PHY
@@ -271,19 +273,19 @@ USE MODE_GRADIENT_W_PHY,      ONLY: GZ_W_M_PHY
 USE MODE_GRADIENT_M_PHY,      ONLY: GZ_M_W_PHY
 USE MODE_IBM_MIXINGLENGTH,    ONLY: IBM_MIXINGLENGTH
 USE MODE_IO_FIELD_WRITE_PHY,      ONLY: IO_FIELD_WRITE_PHY
-!#USE MODE_RMC01,               ONLY: RMC01
-!#USE MODE_ROTATE_WIND,         ONLY: ROTATE_WIND, UPDATE_ROTATE_WIND
+USE MODE_RMC01,               ONLY: RMC01
+USE MODE_ROTATE_WIND,         ONLY: ROTATE_WIND, UPDATE_ROTATE_WIND
 USE MODE_SBL_PHY,             ONLY: LMO
 USE MODE_SOURCES_NEG_CORRECT, ONLY: SOURCES_NEG_CORRECT_PHY
-!#USE MODE_TM06,                ONLY: TM06
+USE MODE_TM06,                ONLY: TM06
 USE MODE_TKE_EPS_SOURCES,     ONLY: TKE_EPS_SOURCES
-!#USE MODE_TURB_HOR_SPLT,       ONLY: TURB_HOR_SPLT
+USE MODE_TURB_HOR_SPLT,       ONLY: TURB_HOR_SPLT
 USE MODE_TURB_VER,            ONLY: TURB_VER
-!#USE MODE_UPDATE_LM,           ONLY: UPDATE_LM
-!#USE MODE_MSG,                 ONLY: PRINT_MSG, NVERB_FATAL
+USE MODE_UPDATE_LM,           ONLY: UPDATE_LM
+USE MODE_MSG,                 ONLY: PRINT_MSG, NVERB_FATAL
 !
 USE MODI_LES_MEAN_SUBGRID_PHY
-!#USE MODI_SECOND_MNH,          ONLY: SECOND_MNH
+USE MODI_SECOND_MNH,          ONLY: SECOND_MNH
 !
 ! These macro are handled by pft_tool.py --craybyPassDOCONCURRENT applied on Cray Rules
 #ifdef MNH_COMPILER_CCE
@@ -465,11 +467,8 @@ REAL, DIMENSION(D%NIJT,D%NKT) ::     &
           ZATHETA_ICE,ZAMOIST_ICE,    &  ! coefficients for s = f (Thetal,Rnp)
           ZRVSAT, ZDRVSATDT,          &  ! local array for routine compute_function_thermo
           ZWORK1,ZWORK2,              &  ! working array syntax
-          ZETHETA,ZEMOIST,            &  ! coef ETHETA and EMOIST (for DEAR routine)
-          ZDTHLDZ,ZDRTDZ,             &  ! dtheta_l/dz, drt_dz used for computing the stablity criterion
           ZCOEF_AMPL,                 &  ! Amplification coefficient of the mixing length
                                          ! when the instability criterium is verified (routine CLOUD_MODIF_LM)
-          ZLM_CLOUD,                  &  ! Turbulent mixing length in the clouds (routine CLOUD_MODIF_LM)
           ZTEMP_BUD
 !
 !
@@ -496,8 +495,6 @@ REAL, DIMENSION(D%NIJT,D%NKT,KSV) :: ZRSVS
 REAL                :: ZEXPL        ! 1-TURBN%XIMPL deg of expl.
 REAL                :: ZRVORD       ! RV/RD
 REAL                :: ZEPS         ! XMV / XMD
-REAL                :: ZD           ! distance to the surface (for routine DELT)
-REAL                :: ZVAR         ! Intermediary variable (for routine DEAR)
 REAL                :: ZPENTE       ! Slope of the amplification straight line (for routine CLOUD_MODIF_LM)
 REAL                :: ZCOEF_AMPL_CEI_NUL! Ordonnate at the origin of the
                                          ! amplification straight line (for routine CLOUD_MODIF_LM)
@@ -533,12 +530,12 @@ INTEGER :: ISV
 REAL(KIND=JPHOOK) :: ZHOOK_HANDLE,ZHOOK_HANDLE2
 IF (LHOOK) CALL DR_HOOK('TURB',0,ZHOOK_HANDLE)
 !
-!#IF (TURBN%LHARAT .AND. TURBN%CTURBDIM /= '1DIM') THEN
-!#  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU only implemented for option TURBN%CTURBDIM=1DIM!')
-!#ENDIF
-!#IF (TURBN%LHARAT .AND. TLES%LLES_CALL) THEN
-!#  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU not implemented for option LLES_CALL')
-!#ENDIF
+IF (TURBN%LHARAT .AND. TURBN%CTURBDIM /= '1DIM') THEN
+  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU only implemented for option TURBN%CTURBDIM=1DIM!')
+ENDIF
+IF (TURBN%LHARAT .AND. TLES%LLES_CALL) THEN
+  CALL PRINT_MSG(NVERB_FATAL, 'GEN', 'TURB', 'TURBN%LHARATU not implemented for option LLES_CALL')
+ENDIF
 !
 IKT=D%NKT
 IKTB=D%NKTB
@@ -614,7 +611,7 @@ END DO
 !
 !*      2.2 Exner function at t
 !
-IF (OOCEAN) THEN
+IF (GOCEAN) THEN
   DO JK=1, IKT
     DO JIJ=IIJB, IIJE
       ZEXN(JIJ, JK) = 1.
@@ -659,15 +656,15 @@ IF (KRRL >=1) THEN
   IF ( KRRI >= 1 ) THEN
     IF (NEBN%LSTATNW) THEN
        !wc call new functions depending on statnew
-       CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
-                                 ZLVOCPEXNM,ZAMOIST,ZATHETA)
-       CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(CST%XALPI,CST%XBETAI,CST%XGAMI,CST%XLSTT,CST%XCI,ZT,ZEXN,ZCP, &
-                                 ZLSOCPEXNM,ZAMOIST_ICE,ZATHETA_ICE)
+       CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(D, CST, CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
+                                 ZLVOCPEXNM,ZAMOIST,ZATHETA, PPABST)
+       CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(D, CST, CST%XALPI,CST%XBETAI,CST%XGAMI,CST%XLSTT,CST%XCI,ZT,ZEXN,ZCP, &
+                                 ZLSOCPEXNM,ZAMOIST_ICE,ZATHETA_ICE, PPABST)
     ELSE
-      CALL COMPUTE_FUNCTION_THERMO(CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
-                                 ZLVOCPEXNM,ZAMOIST,ZATHETA)
-      CALL COMPUTE_FUNCTION_THERMO(CST%XALPI,CST%XBETAI,CST%XGAMI,CST%XLSTT,CST%XCI,ZT,ZEXN,ZCP, &
-                                 ZLSOCPEXNM,ZAMOIST_ICE,ZATHETA_ICE)
+      CALL COMPUTE_FUNCTION_THERMO(D,CST,CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
+                                 ZLVOCPEXNM,ZAMOIST,ZATHETA,PRT,PPABST,KRR)
+      CALL COMPUTE_FUNCTION_THERMO(D,CST,CST%XALPI,CST%XBETAI,CST%XGAMI,CST%XLSTT,CST%XCI,ZT,ZEXN,ZCP, &
+                                 ZLSOCPEXNM,ZAMOIST_ICE,ZATHETA_ICE,PRT,PPABST,KRR)
     ENDIF
     !
 
@@ -694,11 +691,11 @@ IF (KRRL >=1) THEN
   ELSE
     !wc call new stat functions or not
     IF (NEBN%LSTATNW) THEN
-      CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
-                                 ZLOCPEXNM,ZAMOIST,ZATHETA)
+      CALL COMPUTE_FUNCTION_THERMO_NEW_STAT(D,CST,CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
+                                 ZLOCPEXNM,ZAMOIST,ZATHETA,PPABST)
     ELSE
-      CALL COMPUTE_FUNCTION_THERMO(CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
-                                   ZLOCPEXNM,ZAMOIST,ZATHETA)
+      CALL COMPUTE_FUNCTION_THERMO(D,CST,CST%XALPW,CST%XBETAW,CST%XGAMW,CST%XLVTT,CST%XCL,ZT,ZEXN,ZCP, &
+                                   ZLOCPEXNM,ZAMOIST,ZATHETA,PRT,PPABST,KRR)
     ENDIF
   END IF
   !
@@ -802,7 +799,7 @@ SELECT CASE (TURBN%CTURBLEN)
 
     ZSHEAR(:,:)=0.
 
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,OOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
   !
   !*      3.2 RM17 mixing length
   !           ------------------
@@ -824,7 +821,7 @@ SELECT CASE (TURBN%CTURBLEN)
       END DO
     END DO
     
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,OOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
   !
   !*      3.3 Grey-zone combined RM17 & Deardorff mixing lengths
   !           --------------------------------------------------
@@ -846,9 +843,9 @@ SELECT CASE (TURBN%CTURBLEN)
       END DO
     END DO
     
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,OOCEAN)
+    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM,GOCEAN)
 
-    CALL DELT(ZLMW,ODZ=.FALSE.)
+    CALL DELT(D, TURBN, O2D, .FALSE., GOCEAN, PZZ, PDYY, PDXX, PDIRCOSZW, ZLMW)
     ! The minimum mixing length is chosen between Horizontal grid mesh (not taking into account the vertical grid mesh) and RM17.
     ! For large horizontal grid meshes, this is equal to RM17
     ! For LES grid meshes, this is equivalent to Deardorff : the base mixing lentgh is the horizontal grid mesh,
@@ -867,13 +864,16 @@ SELECT CASE (TURBN%CTURBLEN)
   !           -------------------
   !
   CASE ('DELT')
-    CALL DELT(ZLM,ODZ=.TRUE.)
+    CALL DELT(D, TURBN, O2D, .TRUE., GOCEAN, PZZ, PDYY, PDXX, PDIRCOSZW, ZLMW)
   !
   !*      3.5 Deardorff mixing length
   !           -----------------------
   !
   CASE ('DEAR')
-    CALL DEAR(ZLM)
+    CALL DEAR(D, CST, TURBN, KRR, KRRI, O2D, OCOMPUTE_SRC, GOCEAN, &
+    & ZLM, PRT, PDZZ, PZZ, PTKET, PTHVREF, &
+    & PTHLT, ZLOCPEXNM, PSRCT, ZAMOIST, PDIRCOSZW, &
+    & PDXX, PDYY, ZATHETA)
   !
   !*      3.6 Blackadar mixing length
   !           -----------------------
@@ -913,7 +913,12 @@ END SELECT
 !
 !*      3.5 Mixing length modification for cloud
 !           -----------------------
-IF (OCLOUDMODIFLM) CALL CLOUD_MODIF_LM
+IF (OCLOUDMODIFLM) CALL CLOUD_MODIF_LM(D, CST, CSTURB, TURBN, TPFILE, TZFIELD, KRR, KRRI, &
+  & OCLOUDMODIFLM, GOCEAN, OCOMPUTE_SRC, O2D, HTURBLEN_CL, &
+  & PDZZ, PDXX, PDYY, PZZ, &
+  & PRT, PTKET, PTHLT, ZTHLM, ZRM, PTHVREF, &
+  & ZLOCPEXNM, PSRCT, PCOEF_AMPL_SAT, ZAMOIST, ZATHETA, PDIRCOSZW,  &
+  & PCEI, PCEI_MIN, PCEI_MAX, ZLM)
 ENDIF  ! end LHARRAT
 
 !
@@ -946,23 +951,23 @@ DO JIJ=IIJB, IIJE
   ZLMO(JIJ)=XUNDEF
 END DO
 
-!#IF (TURBN%LRMC01) THEN
-!#
-!#  DO JIJ=IIJB, IIJE
-!#    ZUSTAR(JIJ)=(PSFU(JIJ)**2+PSFV(JIJ)**2)**(0.25)
-!#  END DO
-!#
-!#  IF (KRR>0) THEN
-!#    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRM(:,IKB,1),PSFTH,PSFRV,ZLMO)
-!#  ELSE
-!#  
-!#    ZRVM(:)=0.
-!#    ZSFRV(:)=0.
-!#    
-!#    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRVM,PSFTH,ZSFRV,ZLMO)
-!#  END IF
-!#  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,ZLM,ZLEPS)
-!#END IF
+IF (TURBN%LRMC01) THEN
+
+  DO JIJ=IIJB, IIJE
+    ZUSTAR(JIJ)=(PSFU(JIJ)**2+PSFV(JIJ)**2)**(0.25)
+  END DO
+
+  IF (KRR>0) THEN
+    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRM(:,IKB,1),PSFTH,PSFRV,ZLMO)
+  ELSE
+  
+    ZRVM(:)=0.
+    ZSFRV(:)=0.
+    
+    CALL LMO(D,CST,ZUSTAR,ZTHLM(:,IKB),ZRVM,PSFTH,ZSFRV,ZLMO)
+  END IF
+  CALL RMC01(D,CST,CSTURB,TURBN,PZZ,PDXX,PDYY,PDZZ,PDIRCOSZW,PSBL_DEPTH,ZLMO,ZLM,ZLEPS)
+END IF
 !
 !RMC01 is only applied on RM17 in HM21
 IF (TURBN%CTURBLEN=='HM21') THEN
@@ -978,9 +983,9 @@ END IF
 !*      3.8 Mixing length in external points (used if TURBN%CTURBDIM="3DIM")
 !           ----------------------------------------------------------
 !
-!#IF (TURBN%CTURBDIM=="3DIM") THEN
-!#  CALL UPDATE_LM(D,HLBCX,HLBCY,ZLM,ZLEPS)
-!#END IF
+IF (TURBN%CTURBDIM=="3DIM") THEN
+  CALL UPDATE_LM(D,HLBCX,HLBCY,ZLM,ZLEPS)
+END IF
 !
 !*      3.9 Mixing length correction if immersed walls
 !           ------------------------------------------
@@ -999,13 +1004,13 @@ ENDIF
 !
 !
 IF (TURBN%LROTATE_WIND) THEN
-!#  CALL ROTATE_WIND(D,PUT,PVT,PWT,                       &
-!#                     PDIRCOSXW, PDIRCOSYW, PDIRCOSZW,   &
-!#                     PCOSSLOPE,PSINSLOPE,               &
-!#                     PDXX,PDYY,PDZZ,                    &
-!#                     ZUSLOPE,ZVSLOPE                    )
-!#  !
-!#  CALL UPDATE_ROTATE_WIND(D,ZUSLOPE,ZVSLOPE,HLBCX,HLBCY)
+  CALL ROTATE_WIND(D,PUT,PVT,PWT,                       &
+                     PDIRCOSXW, PDIRCOSYW, PDIRCOSZW,   &
+                     PCOSSLOPE,PSINSLOPE,               &
+                     PDXX,PDYY,PDZZ,                    &
+                     ZUSLOPE,ZVSLOPE                    )
+  !
+  CALL UPDATE_ROTATE_WIND(D,ZUSLOPE,ZVSLOPE,HLBCX,HLBCY)
 ELSE
 
   ZUSLOPE(IIJB:IIJE)=PUT(IIJB:IIJE,IKA)
@@ -1058,26 +1063,26 @@ ZMR2(:,:)  = 0.     ! w'r'2
 ZMTHR(:,:) = 0.     ! w'th'r'
 
 !
-!#IF (TURBN%CTOM=='TM06') THEN
-!#  CALL TM06(D,CST,PTHVREF,PBL_DEPTH,PZZ,PSFTH,ZMWTH,ZMTH2)
-!#  !
-!#  CALL GZ_M_W_PHY(D,ZMWTH,PDZZ,ZWORK1)    ! -d(w'2th' )/dz
-!#  CALL GZ_W_M_PHY(D,ZMTH2,PDZZ,ZWORK2)    ! -d(w'th'2 )/dz
-!#  DO JK=1, IKT
-!#    DO JIJ=IIJB, IIJE
-!#      ZFWTH(JIJ, JK) = -ZWORK1(JIJ, JK)
-!#      ZFTH2(JIJ, JK) = -ZWORK2(JIJ, JK)
-!#    END DO
-!#  END DO
-!#  !
-!#  ZFWTH(:,IKTE:) = 0.
-!#  ZFWTH(:,:IKTB) = 0.
-!#  ZFWR(:,:)  = 0.
-!#  ZFTH2(:,IKTE:) = 0.
-!#  ZFTH2(:,:IKTB) = 0.
-!#  ZFR2(:,:)  = 0.
-!#  ZFTHR(:,:) = 0.
-!#ELSE
+IF (TURBN%CTOM=='TM06') THEN
+  CALL TM06(D,CST,PTHVREF,PBL_DEPTH,PZZ,PSFTH,ZMWTH,ZMTH2)
+  !
+  CALL GZ_M_W_PHY(D,ZMWTH,PDZZ,ZWORK1)    ! -d(w'2th' )/dz
+  CALL GZ_W_M_PHY(D,ZMTH2,PDZZ,ZWORK2)    ! -d(w'th'2 )/dz
+  DO JK=1, IKT
+    DO JIJ=IIJB, IIJE
+      ZFWTH(JIJ, JK) = -ZWORK1(JIJ, JK)
+      ZFTH2(JIJ, JK) = -ZWORK2(JIJ, JK)
+    END DO
+  END DO
+  !
+  ZFWTH(:,IKTE:) = 0.
+  ZFWTH(:,:IKTB) = 0.
+  ZFWR(:,:)  = 0.
+  ZFTH2(:,IKTE:) = 0.
+  ZFTH2(:,:IKTB) = 0.
+  ZFR2(:,:)  = 0.
+  ZFTHR(:,:) = 0.
+ELSE
 
   ZFWTH(:,:) = 0.
   ZFWR(:,:)  = 0.
@@ -1085,7 +1090,7 @@ ZMTHR(:,:) = 0.     ! w'th'r'
   ZFR2(:,:)  = 0.
   ZFTHR(:,:) = 0.
 
-!#ENDIF
+ENDIF
 !
 !----------------------------------------------------------------------------
 !
@@ -1160,7 +1165,7 @@ ZMTHR(:,:) = 0.     ! w'th'r'
 
 CALL TURB_VER(D,CST,CSTURB,TURBN,NEBN,TLES,              &
           KRR,KRRL,KRRI,KGRADIENTSLEO,                   &
-          OOCEAN, ODEEPOC, OCOMPUTE_SRC,                 &
+          GOCEAN, ODEEPOC, OCOMPUTE_SRC,                 &
           ISV,KSV_LGBEG,KSV_LGEND,                       &
           ZEXPL, O2D, ONOMIXLG, OFLAT,                   &
           OCOUPLES,OBLOWSNOW,OFLYER, PRSNOW,             &
@@ -1272,171 +1277,171 @@ END IF
 !  END DO
 !END IF
 !
-!#IF( TURBN%CTURBDIM == '3DIM' ) THEN
-!#!  IF( BUCONF%LBUDGET_U  ) CALL TBUDGETS(NBUDGET_U )%PTR%INIT_PHY(D, 'HTURB', PRUS  (:,:) )
-!#!  IF( BUCONF%LBUDGET_V  ) CALL TBUDGETS(NBUDGET_V )%PTR%INIT_PHY(D, 'HTURB', PRVS  (:,:) )
-!#!  IF( BUCONF%LBUDGET_W  ) CALL TBUDGETS(NBUDGET_W )%PTR%INIT_PHY(D, 'HTURB', PRWS  (:,:) )
-!#
-!#!  IF(BUCONF%LBUDGET_TH)  THEN
-!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!#!    
-!#!    DO JK=1, IKT
-!#!      DO JIJ=IIJB, IIJE
-!#!        ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
-!#!      END DO
-!#!    END DO
-!#!    
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE IF( KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:)  )
-!#!    ELSE
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', PRTHLS(:,:) )
-!#!    END IF
-!#!  END IF
-!#
-!#!  IF( BUCONF%LBUDGET_RV ) THEN
-!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE IF( KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 1) )
-!#!    END IF
-!#!  END IF
-!#
-!#!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 2) )
-!#!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!#!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!#!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!#!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
-!#
-!#!  IF( BUCONF%LBUDGET_SV )  THEN
-!#!    DO JSV = 1, KSV
-!#!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%INIT_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
-!#!    END DO
-!#!  END IF
-!#    CALL TURB_HOR_SPLT(D,CST,CSTURB, TURBN, NEBN, TLES,        &
-!#          KSPLIT, KRR, KRRL, KRRI, ISV,KSV_LGBEG,KSV_LGEND,    & 
-!#          PTSTEP,HLBCX,HLBCY, OFLAT,O2D, ONOMIXLG,             & 
-!#          GOCEAN,OCOMPUTE_SRC,OBLOWSNOW,PRSNOW,                &
-!#          TPFILE, KHALO,                                       &
-!#          PDXX,PDYY,PDZZ,PDZX,PDZY,PZZ,                        &
-!#          PDIRCOSXW,PDIRCOSYW,PDIRCOSZW,                       &
-!#          PCOSSLOPE,PSINSLOPE,                                 &
-!#          PRHODJ,PTHVREF,                                      &
-!#          PSFTH,PSFRV,ZWORKSFSV,                               &
-!#          ZCDUEFF,ZTAU11M,ZTAU12M,ZTAU22M,ZTAU33M,             &
-!#          PUT,PVT,PWT,ZUSLOPE,ZVSLOPE,PTHLT,PRT,ZWORKT,        &
-!#          PTKET,ZLM,ZLEPS,                                     &
-!#          ZLOCPEXNM,ZATHETA,ZAMOIST,PSRCT,ZFRAC_ICE,           &
-!#          PDP,PTP,PSIGS,                                       &
-!#          ZTRH,                                                &
-!#          PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS                    )
-!#  !
-!#!  IF (HCLOUD == 'LIMA') THEN
-!#!     IF (KSV_LIMA_NR.GT.0) PRSVS(:,:,KSV_LIMA_NR) = ZRSVS(:,:,KSV_LIMA_NR) 
-!#!     IF (KSV_LIMA_NS.GT.0) PRSVS(:,:,KSV_LIMA_NS) = ZRSVS(:,:,KSV_LIMA_NS)
-!#!     IF (KSV_LIMA_NG.GT.0) PRSVS(:,:,KSV_LIMA_NG) = ZRSVS(:,:,KSV_LIMA_NG) 
-!#!     IF (KSV_LIMA_NH.GT.0) PRSVS(:,:,KSV_LIMA_NH) = ZRSVS(:,:,KSV_LIMA_NH)
-!#!  END IF
-!#  !
-!#  IF (TURBN%LTURB_PRECIP) THEN
-!#!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!#!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!#!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!#!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
-!#    IF (KRR.GE.3) PRRS(:,:,3)=ZWORKS(:,:,KSV+3)
-!#    IF (KRR.GE.5) PRRS(:,:,5)=ZWORKS(:,:,KSV+5)
-!#    IF (KRR.GE.6) PRRS(:,:,6)=ZWORKS(:,:,KSV+6)
-!#    IF (KRR.GE.7) PRRS(:,:,7)=ZWORKS(:,:,KSV+7)
-!#!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!#!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!#!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!#!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
-!#  END IF
-!#  !
-!#
-!#!  IF( BUCONF%LBUDGET_TH ) THEN
-!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE IF( KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE
-!#!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', PRTHLS(:,:) )
-!#!    END IF
-!#!  END IF
-!#
-!#!  IF( BUCONF%LBUDGET_RV ) THEN
-!#!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE IF( KRRL >= 1 ) THEN
-!#!      
-!#!      DO JK=1, IKT
-!#!        DO JIJ=IIJB, IIJE
-!#!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
-!#!        END DO
-!#!      END DO
-!#!      
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
-!#!    ELSE
-!#!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 1) )
-!#!    END IF
-!#!  END IF
-!#
-!#!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 2) )
-!#!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
-!#!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
-!#!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
-!#!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
-!#
-!#!  IF( BUCONF%LBUDGET_SV )  THEN
-!#!    DO JSV = 1, KSV
-!#!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%END_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
-!#!    END DO
-!#!  END IF
-!#END IF
+IF( TURBN%CTURBDIM == '3DIM' ) THEN
+!  IF( BUCONF%LBUDGET_U  ) CALL TBUDGETS(NBUDGET_U )%PTR%INIT_PHY(D, 'HTURB', PRUS  (:,:) )
+!  IF( BUCONF%LBUDGET_V  ) CALL TBUDGETS(NBUDGET_V )%PTR%INIT_PHY(D, 'HTURB', PRVS  (:,:) )
+!  IF( BUCONF%LBUDGET_W  ) CALL TBUDGETS(NBUDGET_W )%PTR%INIT_PHY(D, 'HTURB', PRWS  (:,:) )
+
+!  IF(BUCONF%LBUDGET_TH)  THEN
+!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!    
+!    DO JK=1, IKT
+!      DO JIJ=IIJB, IIJE
+!        ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
+!      END DO
+!    END DO
+!    
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE IF( KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:)  )
+!    ELSE
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%INIT_PHY(D, 'HTURB', PRTHLS(:,:) )
+!    END IF
+!  END IF
+
+!  IF( BUCONF%LBUDGET_RV ) THEN
+!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE IF( KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 1) )
+!    END IF
+!  END IF
+
+!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 2) )
+!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
+
+!  IF( BUCONF%LBUDGET_SV )  THEN
+!    DO JSV = 1, KSV
+!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%INIT_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
+!    END DO
+!  END IF
+    CALL TURB_HOR_SPLT(D,CST,CSTURB, TURBN, NEBN, TLES,        &
+          KSPLIT, KRR, KRRL, KRRI, ISV,KSV_LGBEG,KSV_LGEND,    & 
+          PTSTEP,HLBCX,HLBCY, OFLAT,O2D, ONOMIXLG,             & 
+          GOCEAN,OCOMPUTE_SRC,OBLOWSNOW,PRSNOW,                &
+          TPFILE, KHALO,                                       &
+          PDXX,PDYY,PDZZ,PDZX,PDZY,PZZ,                        &
+          PDIRCOSXW,PDIRCOSYW,PDIRCOSZW,                       &
+          PCOSSLOPE,PSINSLOPE,                                 &
+          PRHODJ,PTHVREF,                                      &
+          PSFTH,PSFRV,ZWORKSFSV,                               &
+          ZCDUEFF,ZTAU11M,ZTAU12M,ZTAU22M,ZTAU33M,             &
+          PUT,PVT,PWT,ZUSLOPE,ZVSLOPE,PTHLT,PRT,ZWORKT,        &
+          PTKET,ZLM,ZLEPS,                                     &
+          ZLOCPEXNM,ZATHETA,ZAMOIST,PSRCT,ZFRAC_ICE,           &
+          PDP,PTP,PSIGS,                                       &
+          ZTRH,                                                &
+          PRUS,PRVS,PRWS,PRTHLS,PRRS,ZWORKS                    )
+  !
+!  IF (HCLOUD == 'LIMA') THEN
+!     IF (KSV_LIMA_NR.GT.0) PRSVS(:,:,KSV_LIMA_NR) = ZRSVS(:,:,KSV_LIMA_NR) 
+!     IF (KSV_LIMA_NS.GT.0) PRSVS(:,:,KSV_LIMA_NS) = ZRSVS(:,:,KSV_LIMA_NS)
+!     IF (KSV_LIMA_NG.GT.0) PRSVS(:,:,KSV_LIMA_NG) = ZRSVS(:,:,KSV_LIMA_NG) 
+!     IF (KSV_LIMA_NH.GT.0) PRSVS(:,:,KSV_LIMA_NH) = ZRSVS(:,:,KSV_LIMA_NH)
+!  END IF
+  !
+  IF (TURBN%LTURB_PRECIP) THEN
+!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%INIT_PHY(D, 'HTURB', PRRS(:,:, 7) )
+    IF (KRR.GE.3) PRRS(:,:,3)=ZWORKS(:,:,KSV+3)
+    IF (KRR.GE.5) PRRS(:,:,5)=ZWORKS(:,:,KSV+5)
+    IF (KRR.GE.6) PRRS(:,:,6)=ZWORKS(:,:,KSV+6)
+    IF (KRR.GE.7) PRRS(:,:,7)=ZWORKS(:,:,KSV+7)
+!    IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!    IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!    IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!    IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
+  END IF
+  !
+
+!  IF( BUCONF%LBUDGET_TH ) THEN
+!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLVOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2) + ZLSOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 4)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE IF( KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRTHLS(JIJ, JK) + ZLOCPEXNM(JIJ, JK) * PRRS(JIJ, JK, 2)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE
+!!      CALL TBUDGETS(NBUDGET_TH)%PTR%END_PHY(D, 'HTURB', PRTHLS(:,:) )
+!    END IF
+!  END IF
+
+!  IF( BUCONF%LBUDGET_RV ) THEN
+!    IF( KRRI >= 1 .AND. KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2) - PRRS(JIJ, JK, 4)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE IF( KRRL >= 1 ) THEN
+!      
+!      DO JK=1, IKT
+!        DO JIJ=IIJB, IIJE
+!          ZTEMP_BUD(JIJ, JK) =  PRRS(JIJ, JK, 1) - PRRS(JIJ, JK, 2)
+!        END DO
+!      END DO
+!      
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', ZTEMP_BUD(:,:) )
+!    ELSE
+!!      CALL TBUDGETS(NBUDGET_RV)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 1) )
+!    END IF
+!  END IF
+
+!  IF( BUCONF%LBUDGET_RC ) CALL TBUDGETS(NBUDGET_RC)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 2) )
+!  IF( BUCONF%LBUDGET_RR ) CALL TBUDGETS(NBUDGET_RR)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 3) )
+!  IF( BUCONF%LBUDGET_RS ) CALL TBUDGETS(NBUDGET_RS)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 5) )
+!  IF( BUCONF%LBUDGET_RG ) CALL TBUDGETS(NBUDGET_RG)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 6) )
+!  IF( BUCONF%LBUDGET_RH .AND. KRR==7) CALL TBUDGETS(NBUDGET_RH)%PTR%END_PHY(D, 'HTURB', PRRS(:,:, 7) )
+
+!  IF( BUCONF%LBUDGET_SV )  THEN
+!    DO JSV = 1, KSV
+!!      CALL TBUDGETS(NBUDGET_SV1 - 1 + JSV)%PTR%END_PHY(D, 'HTURB', ZWORKS(:,:, JSV) )
+!    END DO
+!  END IF
+END IF
 
 !----------------------------------------------------------------------------
 !
@@ -1763,856 +1768,116 @@ CALL SOURCES_NEG_CORRECT_PHY(D,KSV,HCLOUD,HELEC,'NETUR',KRR,PTSTEP,PPABST,PTHLT,
 !*      9. LES averaged surface fluxes
 !          ---------------------------
 !
-!#IF (TLES%LLES_CALL) THEN
-!#  CALL SECOND_MNH(ZTIME1)
-!#  
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFTH,TLES%X_LES_Q0)
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFRV,TLES%X_LES_E0)
-!#  DO JSV=1,KSV
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFSV(:,JSV),TLES%X_LES_SV0(:,JSV))
-!#  END DO
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFU,TLES%X_LES_UW0)
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFV,TLES%X_LES_VW0)
-!#  !
-!#  
-!#  DO JIJ=IIJB, IIJE
-!#    ZWORK2D(JIJ) = (PSFU(JIJ)*PSFU(JIJ)+PSFV(JIJ)*PSFV(JIJ))**0.25
-!#  END DO
-!#  
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2D,TLES%X_LES_USTAR)
-!#
-!#  !----------------------------------------------------------------------------
-!#  !
-!#  !*     10. LES for 3rd order moments
-!#  !          -------------------------
-!#  !
-!#
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWTH,TLES%X_LES_SUBGRID_W2Thl)
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTH2,TLES%X_LES_SUBGRID_WThl2)
-!#
-!#  IF (KRR>0) THEN
-!#
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWR,TLES%X_LES_SUBGRID_W2Rt)
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTHR,TLES%X_LES_SUBGRID_WThlRt)
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMR2,TLES%X_LES_SUBGRID_WRt2)
-!#
-!#  END IF
-!#  !
-!#  !----------------------------------------------------------------------------
-!#  !
-!#  !*     11. LES quantities depending on <w'2> in "1DIM" mode
-!#  !          ------------------------------------------------
-!#  !
-!#  IF (TURBN%CTURBDIM=="1DIM") THEN
-!#
-!#    DO JK=1, IKT
-!#      DO JIJ=IIJB, IIJE
-!#        ZWORK1(JIJ, JK) = 2./3.*PTKET(JIJ, JK)
-!#      END DO
-!#    END DO
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1,TLES%X_LES_SUBGRID_U2)
-!#    TLES%X_LES_SUBGRID_V2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
-!#    TLES%X_LES_SUBGRID_W2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
-!#    !
-!#    CALL GZ_M_W_PHY(D,PTHLT,PDZZ,ZWORK1)
-!#    CALL MZF_PHY(D,ZWORK1,ZWORK2)
-!#    DO JK=1, IKT
-!#      DO JIJ=IIJB, IIJE
-!#        ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-!#      END DO
-!#    END DO
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Thl_SBG_W2)
-!#
-!#    !
-!#    IF (KRR>=1) THEN
-!#
-!#      CALL GZ_M_W_PHY(D,PRT(:,:,1),PDZZ,ZWORK1)
-!#      CALL MZF_PHY(D,ZWORK1,ZWORK2)
-!#      DO JK=1, IKT
-!#        DO JIJ=IIJB, IIJE
-!#          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-!#        END DO
-!#      END DO
-!#      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Rt_SBG_W2)
-!#
-!#    END IF
-!#
-!#    DO JSV=1,KSV
-!#      CALL GZ_M_W_PHY(D,PSVT(:,:,JSV),PDZZ,ZWORK1)
-!#      CALL MZF_PHY(D,ZWORK1,ZWORK2)
-!#      DO JK=1, IKT
-!#        DO JIJ=IIJB, IIJE
-!#          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
-!#        END DO
-!#      END DO
-!#      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2, TLES%X_LES_RES_ddz_Sv_SBG_W2(:,:,:,JSV))
-!#    END DO
-!#
-!#  END IF
-!#  !
-!#  !----------------------------------------------------------------------------
-!#  !
-!#  !*     12. LES mixing end dissipative lengths, presso-correlations
-!#  !          -------------------------------------------------------
-!#  !
-!#
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLM,TLES%X_LES_SUBGRID_LMix)
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_LDiss)
-!#  !
-!#  !* presso-correlations for subgrid Tke are equal to zero.
-!#  !
-!#
-!#  ZLEPS(:,:) = 0. !ZLEPS is used as a work array (not used anymore)
-!#
-!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_WP)
-!#
-!#  !
-!#  CALL SECOND_MNH(ZTIME2)
-!#  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
-!#END IF
+IF (TLES%LLES_CALL) THEN
+  CALL SECOND_MNH(ZTIME1)
+  
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFTH,TLES%X_LES_Q0)
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFRV,TLES%X_LES_E0)
+  DO JSV=1,KSV
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFSV(:,JSV),TLES%X_LES_SV0(:,JSV))
+  END DO
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFU,TLES%X_LES_UW0)
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,PSFV,TLES%X_LES_VW0)
+  !
+  
+  DO JIJ=IIJB, IIJE
+    ZWORK2D(JIJ) = (PSFU(JIJ)*PSFU(JIJ)+PSFV(JIJ)*PSFV(JIJ))**0.25
+  END DO
+  
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2D,TLES%X_LES_USTAR)
+
+  !----------------------------------------------------------------------------
+  !
+  !*     10. LES for 3rd order moments
+  !          -------------------------
+  !
+
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWTH,TLES%X_LES_SUBGRID_W2Thl)
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTH2,TLES%X_LES_SUBGRID_WThl2)
+
+  IF (KRR>0) THEN
+
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMWR,TLES%X_LES_SUBGRID_W2Rt)
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMTHR,TLES%X_LES_SUBGRID_WThlRt)
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZMR2,TLES%X_LES_SUBGRID_WRt2)
+
+  END IF
+  !
+  !----------------------------------------------------------------------------
+  !
+  !*     11. LES quantities depending on <w'2> in "1DIM" mode
+  !          ------------------------------------------------
+  !
+  IF (TURBN%CTURBDIM=="1DIM") THEN
+
+    DO JK=1, IKT
+      DO JIJ=IIJB, IIJE
+        ZWORK1(JIJ, JK) = 2./3.*PTKET(JIJ, JK)
+      END DO
+    END DO
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1,TLES%X_LES_SUBGRID_U2)
+    TLES%X_LES_SUBGRID_V2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
+    TLES%X_LES_SUBGRID_W2(:,:,:) = TLES%X_LES_SUBGRID_U2(:,:,:)
+    !
+    CALL GZ_M_W_PHY(D,PTHLT,PDZZ,ZWORK1)
+    CALL MZF_PHY(D,ZWORK1,ZWORK2)
+    DO JK=1, IKT
+      DO JIJ=IIJB, IIJE
+        ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+      END DO
+    END DO
+    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Thl_SBG_W2)
+
+    !
+    IF (KRR>=1) THEN
+
+      CALL GZ_M_W_PHY(D,PRT(:,:,1),PDZZ,ZWORK1)
+      CALL MZF_PHY(D,ZWORK1,ZWORK2)
+      DO JK=1, IKT
+        DO JIJ=IIJB, IIJE
+          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+        END DO
+      END DO
+      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2,TLES%X_LES_RES_ddz_Rt_SBG_W2)
+
+    END IF
+
+    DO JSV=1,KSV
+      CALL GZ_M_W_PHY(D,PSVT(:,:,JSV),PDZZ,ZWORK1)
+      CALL MZF_PHY(D,ZWORK1,ZWORK2)
+      DO JK=1, IKT
+        DO JIJ=IIJB, IIJE
+          ZWORK2(JIJ, JK)  = 2./3.*PTKET(JIJ, JK) *ZWORK2(JIJ, JK)
+        END DO
+      END DO
+      CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK2, TLES%X_LES_RES_ddz_Sv_SBG_W2(:,:,:,JSV))
+    END DO
+
+  END IF
+  !
+  !----------------------------------------------------------------------------
+  !
+  !*     12. LES mixing end dissipative lengths, presso-correlations
+  !          -------------------------------------------------------
+  !
+
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLM,TLES%X_LES_SUBGRID_LMix)
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_LDiss)
+  !
+  !* presso-correlations for subgrid Tke are equal to zero.
+  !
+
+  ZLEPS(:,:) = 0. !ZLEPS is used as a work array (not used anymore)
+
+  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZLEPS,TLES%X_LES_SUBGRID_WP)
+
+  !
+  CALL SECOND_MNH(ZTIME2)
+  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
+END IF
 !
 IF(PRESENT(PLEM)) PLEM(IIJB:IIJE,IKTB:IKTE) = ZLM(IIJB:IIJE,IKTB:IKTE)
 !----------------------------------------------------------------------------
 !
 IF (LHOOK) CALL DR_HOOK('TURB',1,ZHOOK_HANDLE)
-CONTAINS
-!
-!     ########################################################################
-      SUBROUTINE COMPUTE_FUNCTION_THERMO(PALP,PBETA,PGAM,PLTT,PC,PT,PEXN,PCP,&
-                                         PLOCPEXN,PAMOIST,PATHETA            )
-!     ########################################################################
-!!
-!!****  *COMPUTE_FUNCTION_THERMO* routine to compute several thermo functions
-!
-!!    AUTHOR
-!!    ------
-!!
-!!     JP Pinty      *LA*
-!!
-!!    MODIFICATIONS
-!!    -------------
-!!      Original   24/02/03
-!!
-!-------------------------------------------------------------------------------
-!
-!*       0.    DECLARATIONS
-!              ------------
-!
-IMPLICIT NONE
-!
-!*       0.1   Declarations of dummy arguments
-!
-REAL,                   INTENT(IN)    :: PALP,PBETA,PGAM,PLTT,PC
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(IN)    :: PT,PEXN,PCP
-!
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PLOCPEXN
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PAMOIST,PATHETA
-!
-!-------------------------------------------------------------------------------
-!
-  IF (LHOOK) CALL DR_HOOK('TURB:COMPUTE_FUNCTION_THERMO',0,ZHOOK_HANDLE2)
-  ZEPS = CST%XMV / CST%XMD
-  !
-  !*       1.1 Lv/Cph at  t
-  !
-
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      PLOCPEXN(JIJ, JK) = ( PLTT + (CST%XCPV-PC) *  (PT(JIJ, JK)-CST%XTT) ) &
-                                         / PCP(JIJ, JK)
-    END DO
-  END DO
-
-  !
-
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      !*      1.2 Saturation vapor pressure at t
-      !
-      ZRVSAT(JIJ, JK) =  EXP( PALP - PBETA/PT(JIJ, JK) - PGAM*ALOG( PT(JIJ, JK) ) )
-      !
-      !*      1.3 saturation  mixing ratio at t
-      !
-      !YS Added protection (AROME 2024-03-12 crashs)
-        ZRVSAT(JIJ, JK) =  ZRVSAT(JIJ, JK) &
-                                   * ZEPS / MAX(1.E-3, PPABST(JIJ, JK) - ZRVSAT(JIJ, JK) )
-      !
-      !*      1.4 compute the saturation mixing ratio derivative (rvs')
-      !
-      ZDRVSATDT(JIJ, JK) = ( PBETA / PT(JIJ, JK)  - PGAM ) / PT(JIJ, JK)   &
-                     * ZRVSAT(JIJ, JK) * ( 1. + ZRVSAT(JIJ, JK) / ZEPS )
-      !
-      !*      1.5 compute Amoist
-      !
-      PAMOIST(JIJ, JK)=  0.5 / ( 1.0 + ZDRVSATDT(JIJ, JK) * PLOCPEXN(JIJ, JK) )
-    END DO
-  END DO
-  
-  !
-  !*      1.6 compute Atheta
-  !
-  
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      PATHETA(JIJ, JK)= PAMOIST(JIJ, JK) * PEXN(JIJ, JK) *               &
-            ( ( ZRVSAT(JIJ, JK) - PRT(JIJ, JK, 1) ) * PLOCPEXN(JIJ, JK) / &
-              ( 1. + ZDRVSATDT(JIJ, JK) * PLOCPEXN(JIJ, JK) )        *               &
-              (                                                                  &
-               ZRVSAT(JIJ, JK) * (1. + ZRVSAT(JIJ, JK)/ZEPS)                         &
-                            * ( -2.*PBETA/PT(JIJ, JK) + PGAM ) / PT(JIJ, JK)**2      &
-              +ZDRVSATDT(JIJ, JK) * (1. + 2. * ZRVSAT(JIJ, JK)/ZEPS)                 &
-                            * ( PBETA/PT(JIJ, JK) - PGAM ) / PT(JIJ, JK)             &
-              )                                                                  &
-             - ZDRVSATDT(JIJ, JK)                                                  &
-            )
-    END DO
-  END DO
-  
-  !
-  !*      1.7 Lv/Cph/Exner at t-1
-  !
-  
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      PLOCPEXN(JIJ, JK) = PLOCPEXN(JIJ, JK) / PEXN(JIJ, JK)
-    END DO
-  END DO
-  
-!
-IF (LHOOK) CALL DR_HOOK('TURB:COMPUTE_FUNCTION_THERMO',1,ZHOOK_HANDLE2)
-END SUBROUTINE COMPUTE_FUNCTION_THERMO
-
-!     ########################################################################
-      SUBROUTINE COMPUTE_FUNCTION_THERMO_NEW_STAT(PALP,PBETA,PGAM,PLTT,PC,PT,PEXN,PCP,&
-                                         PLOCPEXN,PAMOIST,PATHETA            )
-!     ########################################################################
-!!
-!!****  *COMPUTE_FUNCTION_THERMO* routine to compute several thermo functions
-!
-!!    AUTHOR
-!!    ------
-!!
-!!     JP Pinty      *LA*
-!!
-!!    MODIFICATIONS
-!!    -------------
-!!      Original   24/02/03
-!!     Modified: Wim de Rooy 06-02-2019
-!!
-!-------------------------------------------------------------------------------
-!
-!*       0.    DECLARATIONS
-!              ------------
-!
-IMPLICIT NONE
-!
-!*       0.1   Declarations of dummy arguments
-!
-REAL, INTENT(IN)                      :: PALP,PBETA,PGAM,PLTT,PC
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(IN)    :: PT,PEXN,PCP
-!
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PLOCPEXN
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PAMOIST,PATHETA
-!
-!-------------------------------------------------------------------------------
-!
-  IF (LHOOK) CALL DR_HOOK('TURB:COMPUTE_FUNCTION_THERMO_NEW_STAT',0,ZHOOK_HANDLE2)
-  ZEPS = CST%XMV / CST%XMD
-   !
-   !*       1.1 Lv/Cph at  t
-   !
-
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      PLOCPEXN(JIJ, JK) = ( PLTT + (CST%XCPV-PC) *  (PT(JIJ, JK)-CST%XTT) ) / PCP(JIJ, JK)
-      !
-      !*      1.2 Saturation vapor pressure at t
-      !
-      ZRVSAT(JIJ, JK) =  EXP( PALP - PBETA/PT(JIJ, JK) - PGAM*ALOG( PT(JIJ, JK) ) )
-      !
-      !*      1.3 saturation  mixing ratio at t
-      !
-      ZRVSAT(JIJ, JK) =  ZRVSAT(JIJ, JK) * ZEPS / ( PPABST(JIJ, JK) - ZRVSAT(JIJ, JK) )
-      !
-      !*      1.4 compute the saturation mixing ratio derivative (rvs')
-      !
-      ZDRVSATDT(JIJ, JK) = ( PBETA / PT(JIJ, JK)  - PGAM ) / PT(JIJ, JK)   &
-                     * ZRVSAT(JIJ, JK) * ( 1. + ZRVSAT(JIJ, JK) / ZEPS )
-      !
-      !*      1.5 compute Amoist
-      !
-      PAMOIST(JIJ, JK)=  1.0 / ( 1.0 + ZDRVSATDT(JIJ, JK) * PLOCPEXN(JIJ, JK) )
-      !
-      !*      1.6 compute Atheta
-      !
-      PATHETA(JIJ, JK)= PAMOIST(JIJ, JK) * PEXN(JIJ, JK) * ZDRVSATDT(JIJ, JK)
-      !
-      !*      1.7 Lv/Cph/Exner at t-1
-      !
-      PLOCPEXN(JIJ, JK) = PLOCPEXN(JIJ, JK) / PEXN(JIJ, JK)
-    END DO
-  END DO
-
-!
-IF (LHOOK) CALL DR_HOOK('TURB:COMPUTE_FUNCTION_THERMO_NEW_STAT',1,ZHOOK_HANDLE2)
-END SUBROUTINE COMPUTE_FUNCTION_THERMO_NEW_STAT
-
-!
-!     ####################
-      SUBROUTINE DELT(PLM,ODZ)
-!     ####################
-!!
-!!****  *DELT* routine to compute mixing length for DELT case
-!
-!!    AUTHOR
-!!    ------
-!!
-!!     M Tomasini      *Meteo-France
-!!
-!!    MODIFICATIONS
-!!    -------------
-!!      Original   01/05
-!!
-!-------------------------------------------------------------------------------
-!
-!*       0.    DECLARATIONS
-!              ------------
-!
-!*       0.1   Declarations of dummy arguments
-!
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PLM
-LOGICAL,                INTENT(IN)    :: ODZ
-!-------------------------------------------------------------------------------
-!
-IF (LHOOK) CALL DR_HOOK('TURB:DELT',0,ZHOOK_HANDLE2)
-!
-CALL MXF_PHY(D,PDXX,ZWORK1)
-IF (.NOT. O2D) THEN
-  CALL MYF_PHY(D,PDYY,ZWORK2)
-END IF
-!
-IF (ODZ) THEN
-
-  ! Dz is take into account in the computation
-  DO JK = IKTB,IKTE ! 1D turbulence scheme
-    DO JIJ=IIJB, IIJE
-      PLM(JIJ, JK) = PZZ(JIJ, JK+IKL) - PZZ(JIJ, JK)
-    END DO
-  END DO
-  DO JIJ=IIJB, IIJE
-    PLM(JIJ, IKU) = PLM(JIJ, IKE)
-    PLM(JIJ, IKA) = PZZ(JIJ, IKB) - PZZ(JIJ, IKA)
-  END DO
-
-  IF ( TURBN%CTURBDIM /= '1DIM' ) THEN  ! 3D turbulence scheme
-    IF ( O2D) THEN
-
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          PLM(JIJ, JK) = SQRT( PLM(JIJ, JK)*ZWORK1(JIJ, JK) )
-        END DO
-      END DO
-
-    ELSE
-
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          PLM(JIJ, JK) = (PLM(JIJ, JK)*ZWORK1(JIJ, JK) &
-                                       * ZWORK2(JIJ, JK) ) ** (1./3.)
-        END DO
-      END DO
-
-    END IF
-  END IF
-ELSE
-  ! Dz not taken into account in computation to assure invariability with vertical grid mesh
-
-  DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      PLM(JIJ, JK)=1.E10
-    END DO
-  END DO
-
-  IF ( TURBN%CTURBDIM /= '1DIM' ) THEN  ! 3D turbulence scheme
-    IF ( O2D) THEN
-      
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          PLM(JIJ, JK) = ZWORK1(JIJ, JK)
-        END DO
-      END DO
-      
-    ELSE
-      
-      DO JK=1, IKT
-        DO JIJ=IIJB, IIJE
-          PLM(JIJ, JK) = (ZWORK1(JIJ, JK)*ZWORK2(JIJ, JK) ) ** (1./2.)
-        END DO
-      END DO
-      
-    END IF
-  END IF
-END IF
-!
-!  mixing length limited by the distance normal to the surface
-!  (with the same factor as for BL89)
-!
-IF (.NOT. TURBN%LRMC01) THEN
-  ZALPHA=0.5**(-1.5)
-  !
-
-  DO JIJ=IIJB,IIJE
-    IF (GOCEAN) THEN
-      DO JK=IKTE,IKTB,-1
-        ZD=ZALPHA*(PZZ(JIJ,IKTE+1)-PZZ(JIJ,JK))
-        IF ( PLM(JIJ,JK)>ZD) THEN
-          PLM(JIJ,JK)=ZD
-        ELSE
-          EXIT
-        ENDIF
-      END DO
-    ELSE
-      DO JK=IKTB,IKTE
-        ZD=ZALPHA*(0.5*(PZZ(JIJ,JK)+PZZ(JIJ,JK+IKL))&
-        -PZZ(JIJ,IKB)) *PDIRCOSZW(JIJ)
-        IF ( PLM(JIJ,JK)>ZD) THEN
-          PLM(JIJ,JK)=ZD
-        ELSE
-          EXIT
-        ENDIF
-      END DO
-    ENDIF
-  END DO
-
-END IF
-!
-
-DO JIJ=IIJB, IIJE
-  PLM(JIJ, IKA) = PLM(JIJ, IKB)
-  PLM(JIJ, IKU) = PLM(JIJ, IKE)
-END DO
-
-!
-IF (LHOOK) CALL DR_HOOK('TURB:DELT',1,ZHOOK_HANDLE2)
-END SUBROUTINE DELT
-!
-!     ####################
-      SUBROUTINE DEAR(PLM)
-!     ####################
-!!
-!!****  *DEAR* routine to compute mixing length for DEARdorff case
-!
-!!    AUTHOR
-!!    ------
-!!
-!!     M Tomasini      *Meteo-France
-!!
-!!    MODIFICATIONS
-!!    -------------
-!!      Original   01/05
-!!      I.Sandu (Sept.2006) : Modification of the stability criterion
-!!                            (theta_v -> theta_l)
-!!
-!-------------------------------------------------------------------------------
-!
-!*       0.    DECLARATIONS
-!              ------------
-!
-!*       0.1   Declarations of dummy arguments
-!
-REAL, DIMENSION(D%NIJT,D%NKT), INTENT(OUT)   :: PLM
-!
-LOGICAL :: GZD
-!-------------------------------------------------------------------------------
-!
-!   initialize the mixing length with the mesh grid
-IF (LHOOK) CALL DR_HOOK('TURB:DEAR',0,ZHOOK_HANDLE2)
-IF ( TURBN%CTURBDIM /= '1DIM' ) THEN
-  CALL MXF_PHY(D,PDXX,ZWORK1)
-  IF (.NOT. O2D) THEN
-    CALL MYF_PHY(D,PDYY,ZWORK2)
-  END IF
-END IF
-! 1D turbulence scheme
-
-DO JK=IKTB, IKTE
-  DO JIJ=IIJB, IIJE
-    PLM(JIJ, JK) = PZZ(JIJ, IKL + JK) - PZZ(JIJ, JK)
-  END DO
-END DO
-DO JIJ=IIJB, IIJE
-  PLM(JIJ, IKU) = PLM(JIJ, IKE)
-  PLM(JIJ, IKA) = PZZ(JIJ, IKB) - PZZ(JIJ, IKA)
-END DO
-
-!
-IF ( TURBN%CTURBDIM /= '1DIM' ) THEN  ! 3D turbulence scheme
-  IF ( O2D) THEN
-    
-    DO JK=1, IKT
-      DO JIJ=IIJB, IIJE
-        PLM(JIJ, JK) = SQRT( PLM(JIJ, JK)*ZWORK1(JIJ, JK) )
-      END DO
-    END DO
-    
-  ELSE
-    
-    DO JK=1, IKT
-      DO JIJ=IIJB, IIJE
-        PLM(JIJ, JK) = (PLM(JIJ, JK)*ZWORK1(JIJ, JK) &
-                                     * ZWORK2(JIJ, JK) ) ** (1./3.)
-      END DO
-    END DO
-    
-  END IF
-END IF
-!   compute a mixing length limited by the stability
-!
-CALL ETHETA(D,CST,KRR,KRRI,PTHLT,PRT,ZLOCPEXNM,ZATHETA,PSRCT,GOCEAN,OCOMPUTE_SRC,ZETHETA)
-CALL EMOIST(D,CST,KRR,KRRI,PTHLT,PRT,ZLOCPEXNM,ZAMOIST,PSRCT,GOCEAN,ZEMOIST)
-!
-IF (KRR>0) THEN
-
-
-  DO JK=IKTB+1,IKTE-1
-    DO JIJ=IIJB,IIJE
-      ZDTHLDZ(JIJ,JK)= 0.5*((PTHLT(JIJ,JK+IKL)-PTHLT(JIJ,JK    ))/PDZZ(JIJ,JK+IKL)+ &
-                              (PTHLT(JIJ,JK    )-PTHLT(JIJ,JK-IKL))/PDZZ(JIJ,JK    ))
-      ZDRTDZ(JIJ,JK) = 0.5*((PRT(JIJ,JK+IKL,1)-PRT(JIJ,JK    ,1))/PDZZ(JIJ,JK+IKL)+ &
-                              (PRT(JIJ,JK    ,1)-PRT(JIJ,JK-IKL,1))/PDZZ(JIJ,JK    ))
-    END DO
-  END DO
-
-
-
-
-  DO JK=IKTB+1,IKTE-1
-    DO JIJ=IIJB,IIJE
-      IF (GOCEAN) THEN
-        ZVAR=CST%XG*(CST%XALPHAOC*ZDTHLDZ(JIJ,JK)-CST%XBETAOC*ZDRTDZ(JIJ,JK))
-      ELSE
-        ZVAR=CST%XG/PTHVREF(JIJ,JK)*                                                  &
-           (ZETHETA(JIJ,JK)*ZDTHLDZ(JIJ,JK)+ZEMOIST(JIJ,JK)*ZDRTDZ(JIJ,JK))
-      END IF
-      !
-      IF (ZVAR>0.) THEN
-        PLM(JIJ,JK)=MAX(CST%XMNH_EPSILON,MIN(PLM(JIJ,JK), &
-                      0.76* SQRT(PTKET(JIJ,JK)/ZVAR)))
-      END IF
-    END DO
-  END DO
-
-
-ELSE! For dry atmos or unsalted ocean runs
-
-
-  DO JK=IKTB+1,IKTE-1
-    DO JIJ=IIJB,IIJE
-      ZDTHLDZ(JIJ,JK)= 0.5*((PTHLT(JIJ,JK+IKL)-PTHLT(JIJ,JK    ))/PDZZ(JIJ,JK+IKL)+ &
-                              (PTHLT(JIJ,JK    )-PTHLT(JIJ,JK-IKL))/PDZZ(JIJ,JK    ))
-      IF (GOCEAN) THEN
-        ZVAR= CST%XG*CST%XALPHAOC*ZDTHLDZ(JIJ,JK)
-      ELSE
-        ZVAR= CST%XG/PTHVREF(JIJ,JK)*ZETHETA(JIJ,JK)*ZDTHLDZ(JIJ,JK)
-      END IF
-!
-      IF (ZVAR>0.) THEN
-        PLM(JIJ,JK)=MAX(CST%XMNH_EPSILON,MIN(PLM(JIJ,JK), &
-                      0.76* SQRT(PTKET(JIJ,JK)/ZVAR)))
-      END IF
-    END DO
-  END DO
-
-END IF
-
-!  special case near the surface
-DO JIJ=IIJB, IIJE
-  ZDTHLDZ(JIJ, IKB)=(PTHLT(JIJ, IKB+IKL)-PTHLT(JIJ, IKB))/PDZZ(JIJ, IKB+IKL)
-END DO
-! For dry simulations
-IF (KRR>0) THEN
-  DO JIJ=IIJB, IIJE
-    ZDRTDZ(JIJ, IKB)=(PRT(JIJ, IKB+IKL, 1)-PRT(JIJ, IKB, 1))/PDZZ(JIJ, IKB+IKL)
-  END DO
-ELSE
-  ZDRTDZ(:,IKB)=0
-ENDIF
-!
-IF (GOCEAN) THEN
-  DO JIJ=IIJB, IIJE
-    ZWORK2D(JIJ)=CST%XG*(CST%XALPHAOC*ZDTHLDZ(JIJ, IKB)-CST%XBETAOC*ZDRTDZ(JIJ, IKB))
-  END DO
-ELSE
-  DO JIJ=IIJB, IIJE
-    ZWORK2D(JIJ)=CST%XG/PTHVREF(JIJ, IKB)*                                           &
-                (ZETHETA(JIJ, IKB)*ZDTHLDZ(JIJ, IKB)+ZEMOIST(JIJ, IKB)*ZDRTDZ(JIJ, IKB))
-  END DO
-END IF
-DO JIJ=IIJB, IIJE
-  IF (ZWORK2D(JIJ)>0.) THEN
-    PLM(JIJ, IKB)=MAX(CST%XMNH_EPSILON,MIN( PLM(JIJ, IKB),                 &
-                      0.76* SQRT(PTKET(JIJ, IKB)/ZWORK2D(JIJ))))
-  END IF
-END DO
-!
-!  mixing length limited by the distance normal to the surface (with the same factor as for BL89)
-!
-IF (.NOT. TURBN%LRMC01) THEN
-  ZALPHA=0.5**(-1.5)
-  !
-  
-  DO JIJ=IIJB,IIJE
-    GZD = .TRUE.
-    IF (GOCEAN) THEN
-      
-      DO JK=IKTE,IKTB,-1
-        ZD=ZALPHA*(PZZ(JIJ,IKTE+1)-PZZ(JIJ,JK))
-        IF ( ( PLM(JIJ,JK)>ZD) .AND. GZD ) THEN
-          PLM(JIJ,JK)=ZD
-        ELSE
-          GZD = .FALSE.
-        ENDIF
-      END DO
-    ELSE
-      DO JK=IKTB,IKTE
-        ZD=ZALPHA*(0.5*(PZZ(JIJ,JK)+PZZ(JIJ,JK+IKL))-PZZ(JIJ,IKB)) &
-          *PDIRCOSZW(JIJ)
-        IF ( ( PLM(JIJ,JK)>ZD) .AND. GZD ) THEN
-          PLM(JIJ,JK)=ZD
-        ELSE
-          GZD = .FALSE.
-        ENDIF
-      END DO
-    ENDIF
-  END DO
-END IF
-!
-DO JIJ=IIJB, IIJE
-  PLM(JIJ, IKA) = PLM(JIJ, IKB)
-  PLM(JIJ, IKE) = PLM(JIJ, IKE-IKL)
-  PLM(JIJ, IKU) = PLM(JIJ, IKU-IKL)
-END DO
-!
-
-IF (LHOOK) CALL DR_HOOK('TURB:DEAR',1,ZHOOK_HANDLE2)
-END SUBROUTINE DEAR
-!
-!     #########################
-      SUBROUTINE CLOUD_MODIF_LM
-!     #########################
-!!
-!!*****CLOUD_MODIF_LM routine to:
-!!       1/ change the mixing length in the clouds
-!!       2/ emphasize the mixing length in the cloud
-!!           by the coefficient ZCOEF_AMPL calculated here
-!!             when the CEI index is above ZCEI_MIN.
-!!
-!!
-!!      ZCOEF_AMPL ^
-!!                 |
-!!                 |
-!!  ZCOEF_AMPL_SAT -                       ---------- Saturation
-!!    (XDUMMY1)    |                      -
-!!                 |                     -
-!!                 |                    -
-!!                 |                   -
-!!                 |                  - Amplification
-!!                 |                 - straight
-!!                 |                - line
-!!                 |               -
-!!                 |              -
-!!                 |             -
-!!                 |            -
-!!                 |           -
-!!               1 ------------
-!!                 |
-!!                 |
-!!               0 -----------|------------|----------> PCEI
-!!                 0      ZCEI_MIN     ZCEI_MAX
-!!                        (XDUMMY2)    (XDUMMY3)
-!!
-!!
-!!
-!!    AUTHOR
-!!    ------
-!!     M. Tomasini   *CNRM METEO-FRANCE
-!!
-!!    MODIFICATIONS
-!!    -------------
-!!     Original   09/07/04
-!!
-!-------------------------------------------------------------------------------
-!
-!*       0.    DECLARATIONS
-!              ------------
-!
-IMPLICIT NONE
-!
-!-------------------------------------------------------------------------------
-!
-!*       1.    INITIALISATION
-!              --------------
-!
-IF (LHOOK) CALL DR_HOOK('TURB:CLOUD_MODIF_LM',0,ZHOOK_HANDLE2)
-ZPENTE = ( PCOEF_AMPL_SAT - 1. ) / ( PCEI_MAX - PCEI_MIN )
-ZCOEF_AMPL_CEI_NUL = 1. - ZPENTE * PCEI_MIN
-!
-
-DO JK=1, IKT
-  DO JIJ=IIJB, IIJE
-    ZCOEF_AMPL(JIJ, JK) = 1.
-  END DO
-END DO
-
-!
-!*       2.    CALCULATION OF THE AMPLIFICATION COEFFICIENT
-!              --------------------------------------------
-!
-! Saturation
-!
-
-DO JK=1, IKT
-  DO JIJ=IIJB, IIJE
-    IF ( PCEI(JIJ, JK)>=PCEI_MAX ) THEN 
-      ZCOEF_AMPL(JIJ, JK)=PCOEF_AMPL_SAT
-    END IF
-  END DO
-END DO
-
-!
-! Between the min and max limits of CEI index, linear variation of the
-! amplification coefficient ZCOEF_AMPL as a function of CEI
-!
-
-DO JK=1, IKT
-  DO JIJ=IIJB, IIJE
-    IF ( PCEI(JIJ, JK) <  PCEI_MAX .AND. PCEI(JIJ, JK) >  PCEI_MIN) THEN
-      ZCOEF_AMPL(JIJ, JK) = ZPENTE * PCEI(JIJ, JK) + ZCOEF_AMPL_CEI_NUL
-    END IF
-  END DO
-END DO
-
-!
-!
-!*       3.    CALCULATION OF THE MIXING LENGTH IN CLOUDS
-!              ------------------------------------------
-!
-IF (HTURBLEN_CL == TURBN%CTURBLEN) THEN
-
-DO JK=1, IKT
-    DO JIJ=IIJB, IIJE
-      ZLM_CLOUD(JIJ, JK) = ZLM(JIJ, JK)
-  END DO
-  END DO
-
-ELSE
-  SELECT CASE (HTURBLEN_CL)
-  !
-  !*         3.1 BL89 mixing length
-  !           ------------------
-  CASE ('BL89','RM17','HM21')
-    
-    DO JK=1, IKT
-      DO JIJ=IIJB, IIJE
-        ZSHEAR(JIJ, JK)=0.
-      END DO
-    END DO
-    
-    CALL BL89(D,CST,CSTURB,TURBN,PZZ,PDZZ,PTHVREF,ZTHLM,KRR,ZRM,PTKET,ZSHEAR,ZLM_CLOUD,OOCEAN)
-  !
-  !*         3.2 Delta mixing length
-  !           -------------------
-  CASE ('DELT')
-    CALL DELT(ZLM_CLOUD,ODZ=.TRUE.)
-  !
-  !*         3.3 Deardorff mixing length
-  !           -----------------------
-  CASE ('DEAR')
-    CALL DEAR(ZLM_CLOUD)
-  !
-  END SELECT
-ENDIF
-!
-!*       4.    MODIFICATION OF THE MIXING LENGTH IN THE CLOUDS
-!              -----------------------------------------------
-!
-! Impression before modification of the mixing length
-IF ( TURBN%LTURB_DIAG .AND. TPFILE%LOPENED ) THEN
-  TZFIELD = TFIELDMETADATA(            &
-    CMNHNAME   = 'LM_CLEAR_SKY',       &
-    CSTDNAME   = '',                   &
-    CLONGNAME  = 'LM_CLEAR_SKY',       &
-    CUNITS     = 'm',                  &
-    CDIR       = 'XY',                 &
-    CCOMMENT   = 'X_Y_Z_LM CLEAR SKY', &
-    NGRID      = 1,                    &
-    NTYPE      = TYPEREAL,             &
-    NDIMS      = 3,                    &
-    LTIMEDEP   = .TRUE.                )
-
-  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZLM)
-ENDIF
-!
-! Amplification of the mixing length when the criteria are verified
-!
-
-DO JK=1, IKT
-  DO JIJ=IIJB, IIJE
-    IF (ZCOEF_AMPL(JIJ, JK) /= 1.) THEN 
-      ZLM(JIJ, JK) = ZCOEF_AMPL(JIJ, JK)*ZLM_CLOUD(JIJ, JK)
-    END IF
-  END DO
-END DO
-
-!
-! Cloud mixing length in the clouds at the points which do not verified the CEI
-!
-
-DO JK=1, IKT
-  DO JIJ=IIJB, IIJE
-    IF (PCEI(JIJ, JK) == -1.) THEN
-      ZLM(JIJ, JK) = ZLM_CLOUD(JIJ, JK)
-    END IF
-  END DO
-END DO
-
-!
-!
-!*       5.    IMPRESSION
-!              ----------
-!
-IF ( TURBN%LTURB_DIAG .AND. TPFILE%LOPENED ) THEN
-  TZFIELD = TFIELDMETADATA(         &
-    CMNHNAME   = 'COEF_AMPL',       &
-    CSTDNAME   = '',                &
-    CLONGNAME  = 'COEF_AMPL',       &
-    CUNITS     = '1',               &
-    CDIR       = 'XY',              &
-    CCOMMENT   = 'X_Y_Z_COEF AMPL', &
-    NGRID      = 1,                 &
-    NTYPE      = TYPEREAL,          &
-    NDIMS      = 3,                 &
-    LTIMEDEP   = .TRUE.             )
-
-  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZCOEF_AMPL)
-  !
-  TZFIELD = TFIELDMETADATA(        &
-    CMNHNAME   = 'LM_CLOUD',       &
-    CSTDNAME   = '',               &
-    CLONGNAME  = 'LM_CLOUD',       &
-    CUNITS     = 'm',              &
-    CDIR       = 'XY',             &
-    CCOMMENT   = 'X_Y_Z_LM CLOUD', &
-    NGRID      = 1,                &
-    NTYPE      = TYPEREAL,         &
-    NDIMS      = 3,                &
-    LTIMEDEP   = .TRUE.            )
-
-  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZLM_CLOUD)
-  !
-ENDIF
-!
-IF (LHOOK) CALL DR_HOOK('TURB:CLOUD_MODIF_LM',1,ZHOOK_HANDLE2)
-END SUBROUTINE CLOUD_MODIF_LM
-!
 END SUBROUTINE TURB
