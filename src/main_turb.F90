@@ -55,9 +55,9 @@ USE UTIL_TFILEDATA_MOD
 USE XRD_GETOPTIONS
 USE XRD_UNIX_ENV
 
-#include "stack.h"
+#include "fxtran_acdc_stack.h"
 
-USE STACK_MOD
+USE FXTRAN_ACDC_STACK_MOD
 
 USE, INTRINSIC :: ISO_FORTRAN_ENV, ONLY : STDOUT => OUTPUT_UNIT
 
@@ -232,7 +232,8 @@ CHARACTER (LEN=128) :: CLCASE_OUT
 TYPE (DD12), POINTER :: YLD
 LOGICAL :: LLVERBOSE, LLDIFF
 INTEGER(KIND=JPIM), POINTER :: IBLOCKLIST (:)
-TYPE(STACK) :: YLSTACK
+TYPE(FXTRAN_ACDC_STACK) :: YLSTACK
+TYPE(FXTRAN_ACDC_STACK) :: YLOFFSET
 INTEGER(KIND=JPIM) :: ISIZE4, ISIZE8
 CHARACTER*64 :: CLMETHOD
 INTEGER(KIND=JPIM) :: ITIME, NTIME
@@ -321,14 +322,15 @@ CALL GET_TIME (TSD)
 !$ACC& ZZDRSVS_TURB) IF (TRIM (CLMETHOD) == 'openaccsinglecolumn')
 
 IF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
-  CALL COPY(D)
-  CALL COPY(CST)
-  CALL COPY(CSTURB)
-  !CALLCOPYD(BUCONF, ILUNCI)
-  CALL COPY(TURBN)
-  CALL COPY(NEBN)
-  CALL COPY(TLES)
-  CALL COPY(TPFILE)
+  CALL ACDC_COPY(D)
+  CALL ACDC_COPY(CST)
+  CALL ACDC_COPY(CSTURB)
+  !CALLACDC_COPYD(BUCONF, ILUNCI)
+  CALL ACDC_COPY(TURBN)
+  CALL ACDC_COPY(NEBN)
+  CALL ACDC_COPY(TLES)
+  CALL ACDC_COPY(TPFILE)
+  CALL YFXTRAN_ACDC_STACK%INIT(NPROMA,KLEV,NGPBLKS,ISIZE4,ISIZE8)
 ENDIF
 
 
@@ -415,12 +417,6 @@ CALL TURB(CST,CSTURB,TURBN,NEBN,D,TLES,            &
     ENDDO !jblk
   ELSEIF (TRIM (CLMETHOD) == 'openmpsinglecolumn') THEN
 
-    IF (ITIME==1) THEN
-      YSTACK%IALIGN = 8 
-      IF (ISIZE4 > 0) ALLOCATE (YSTACK%ZDATA4 (NPROMA, KLEV, ISIZE4, NGPBLKS))
-      IF (ISIZE8 > 0) ALLOCATE (YSTACK%ZDATA8 (NPROMA, KLEV, ISIZE8, NGPBLKS))
-    ENDIF
-
 !$OMP PARALLEL DO PRIVATE (JBLK, JLON, YLSTACK) FIRSTPRIVATE(D) COLLAPSE(2)
     DO JBLK = 1, NGPBLKS
       DO JLON = 1,NPROMA
@@ -428,51 +424,51 @@ CALL TURB(CST,CSTURB,TURBN,NEBN,D,TLES,            &
         D%NIJE=JLON
         D%NIB=JLON
         D%NIE=JLON
-        YLSTACK%L8 = stack_l8 (YSTACK, JBLK, NGPBLKS)
-        YLSTACK%U8 = stack_u8 (YSTACK, JBLK, NGPBLKS)
-        YLSTACK%L4 = stack_l4 (YSTACK, JBLK, NGPBLKS)
-        YLSTACK%U4 = stack_u4 (YSTACK, JBLK, NGPBLKS)
+        YLSTACK%L8 = fxtran_acdc_stack_l8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%U8 = fxtran_acdc_stack_u8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%L4 = fxtran_acdc_stack_l4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%U4 = fxtran_acdc_stack_u4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
 
-      CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
-              & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
-              & KGRADIENTSGOG,KHALO,                                  &                 
-              & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
-              & KSV_LIMA_NR, KSV_LIMA_NS, KSV_LIMA_NG, KSV_LIMA_NH,   &                 
-              & O2D,ONOMIXLG,OFLAT,OCOUPLES,OBLOWSNOW,OIBM,OFLYER,    &                 
-              & OCOMPUTE_SRC, PRSNOW,                                 & 
-              & OOCEAN,ODEEPOC,ODIAG_IN_RUN,                          &
-              & HTURBLEN_CL,HCLOUD,HELEC,                             &
-              & PTSTEP,TPFILE,                                        &
-              & ZZDXX(:, :, JBLK), ZZDYY(:, :, JBLK), ZZDZZ(:, :, JBLK),  &
-              & ZZDZX(:, :, JBLK), ZZDZY(:, :, JBLK), ZZZZ(:, :, JBLK),  &
-              & ZZDIRCOSXW(:, JBLK), ZZDIRCOSYW(:, JBLK),  &
-              & ZZDIRCOSZW(:, JBLK), ZZCOSSLOPE(:, JBLK),  &
-              & ZZSINSLOPE(:, JBLK), ZZRHODJ(:, :, JBLK),  &
-              & ZZTHVREF(:, :, JBLK), ZZHGRADLEO(:, :, :, JBLK),  &
-              & ZZHGRADGOG(:, :, :, JBLK), ZZZS(:, JBLK), ZZSFTH(:, JBLK),  &
-              & ZZSFRV(:, JBLK), ZZSFSV(:, :, JBLK), ZZSFU(:, JBLK),  &
-              & ZZSFV(:, JBLK), ZZPABST(:, :, JBLK), ZZUT(:, :, JBLK),  &
-              & ZZVT(:, :, JBLK), ZZWT(:, :, JBLK), ZZTKET(:, :, JBLK),  &
-              & ZZSVT(:, :, :, JBLK), ZZSRCT(:, :, JBLK),  &
-              & ZZLENGTHM(:, :, JBLK), ZZLENGTHH(:, :, JBLK),  &
-              & ZZFMOIST(:, :, JBLK), ZZBL_DEPTH(:, JBLK),  &
-              & ZZSBL_DEPTH(:, JBLK), ZZCEI(:, :, JBLK),  &
-              & PCEI_MIN, PCEI_MAX, PCOEF_AMPL_SAT, &
-              & ZZTHLT(:, :, JBLK), ZZRT(:, :, :, JBLK), ZZRUS(:, :, JBLK),  &
-              & ZZRVS(:, :, JBLK), ZZRWS(:, :, JBLK), ZZRTHLS(:, :, JBLK),  &
-              & ZZRRS(:, :, :, JBLK), ZZRSVS(:, :, :, JBLK),  &
-              & ZZRTKES(:, :, JBLK), ZZSIGS(:, :, JBLK),  &
-              & ZZFLXZTHVMF(:, :, JBLK), ZZFLXZUMF(:, :, JBLK),  &
-              & ZZFLXZVMF(:, :, JBLK), ZZWTH(:, :, JBLK),  &
-              & ZZWRC(:, :, JBLK), ZZWSV(:, :, :, JBLK), ZZDP(:, :, JBLK),  &
-              & ZZTP(:, :, JBLK), ZZTDIFF(:, :, JBLK), ZZTDISS(:, :, JBLK),  &
-              & KBUDGETS, &
-              & PEDR=ZZEDR(:, :, JBLK), &
-              & PDPMF=ZZDPMF(:, :, JBLK),  &
-              & PTPMF=ZZTPMF(:, :, JBLK), PDRUS_TURB=ZZDRUS_TURB(:, :, JBLK),  &
-              & PDRVS_TURB=ZZDRVS_TURB(:, :, JBLK), PDRTHLS_TURB=ZZDRTHLS_TURB(:, :, JBLK),  &
-              & PDRRTS_TURB=ZZDRRTS_TURB(:, :, JBLK), PDRSVS_TURB=ZZDRSVS_TURB(:, :, :, JBLK), & 
-              & YDSTACK=YLSTACK)
+!#      CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
+!#              & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
+!#              & KGRADIENTSGOG,KHALO,                                  &                 
+!#              & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
+!#              & KSV_LIMA_NR, KSV_LIMA_NS, KSV_LIMA_NG, KSV_LIMA_NH,   &                 
+!#              & O2D,ONOMIXLG,OFLAT,OCOUPLES,OBLOWSNOW,OIBM,OFLYER,    &                 
+!#              & OCOMPUTE_SRC, PRSNOW,                                 & 
+!#              & OOCEAN,ODEEPOC,ODIAG_IN_RUN,                          &
+!#              & HTURBLEN_CL,HCLOUD,HELEC,                             &
+!#              & PTSTEP,TPFILE,                                        &
+!#              & ZZDXX(:, :, JBLK), ZZDYY(:, :, JBLK), ZZDZZ(:, :, JBLK),  &
+!#              & ZZDZX(:, :, JBLK), ZZDZY(:, :, JBLK), ZZZZ(:, :, JBLK),  &
+!#              & ZZDIRCOSXW(:, JBLK), ZZDIRCOSYW(:, JBLK),  &
+!#              & ZZDIRCOSZW(:, JBLK), ZZCOSSLOPE(:, JBLK),  &
+!#              & ZZSINSLOPE(:, JBLK), ZZRHODJ(:, :, JBLK),  &
+!#              & ZZTHVREF(:, :, JBLK), ZZHGRADLEO(:, :, :, JBLK),  &
+!#              & ZZHGRADGOG(:, :, :, JBLK), ZZZS(:, JBLK), ZZSFTH(:, JBLK),  &
+!#              & ZZSFRV(:, JBLK), ZZSFSV(:, :, JBLK), ZZSFU(:, JBLK),  &
+!#              & ZZSFV(:, JBLK), ZZPABST(:, :, JBLK), ZZUT(:, :, JBLK),  &
+!#              & ZZVT(:, :, JBLK), ZZWT(:, :, JBLK), ZZTKET(:, :, JBLK),  &
+!#              & ZZSVT(:, :, :, JBLK), ZZSRCT(:, :, JBLK),  &
+!#              & ZZLENGTHM(:, :, JBLK), ZZLENGTHH(:, :, JBLK),  &
+!#              & ZZFMOIST(:, :, JBLK), ZZBL_DEPTH(:, JBLK),  &
+!#              & ZZSBL_DEPTH(:, JBLK), ZZCEI(:, :, JBLK),  &
+!#              & PCEI_MIN, PCEI_MAX, PCOEF_AMPL_SAT, &
+!#              & ZZTHLT(:, :, JBLK), ZZRT(:, :, :, JBLK), ZZRUS(:, :, JBLK),  &
+!#              & ZZRVS(:, :, JBLK), ZZRWS(:, :, JBLK), ZZRTHLS(:, :, JBLK),  &
+!#              & ZZRRS(:, :, :, JBLK), ZZRSVS(:, :, :, JBLK),  &
+!#              & ZZRTKES(:, :, JBLK), ZZSIGS(:, :, JBLK),  &
+!#              & ZZFLXZTHVMF(:, :, JBLK), ZZFLXZUMF(:, :, JBLK),  &
+!#              & ZZFLXZVMF(:, :, JBLK), ZZWTH(:, :, JBLK),  &
+!#              & ZZWRC(:, :, JBLK), ZZWSV(:, :, :, JBLK), ZZDP(:, :, JBLK),  &
+!#              & ZZTP(:, :, JBLK), ZZTDIFF(:, :, JBLK), ZZTDISS(:, :, JBLK),  &
+!#              & KBUDGETS, &
+!#              & PEDR=ZZEDR(:, :, JBLK), &
+!#              & PDPMF=ZZDPMF(:, :, JBLK),  &
+!#              & PTPMF=ZZTPMF(:, :, JBLK), PDRUS_TURB=ZZDRUS_TURB(:, :, JBLK),  &
+!#              & PDRVS_TURB=ZZDRVS_TURB(:, :, JBLK), PDRTHLS_TURB=ZZDRTHLS_TURB(:, :, JBLK),  &
+!#              & PDRRTS_TURB=ZZDRRTS_TURB(:, :, JBLK), PDRSVS_TURB=ZZDRSVS_TURB(:, :, :, JBLK), & 
+!#              & YDSTACK=YLSTACK)
       ENDDO !jlon
     ENDDO !jblk
   ENDIF !method omp/acc 
@@ -481,14 +477,14 @@ ENDDO !time
 CALL GET_TIME (TEC)
 
 IF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
-  CALL COPY(D)
-  CALL COPY(CST)
-  CALL COPY(CSTURB)
-  !CALLCOPYD(BUCONF, ILUNCI)
-  CALL COPY(TURBN)
-  CALL COPY(NEBN)
-  CALL COPY(TLES)
-  CALL COPY(TPFILE)
+  CALL ACDC_COPY(D)
+  CALL ACDC_COPY(CST)
+  CALL ACDC_COPY(CSTURB)
+  !CALLACDC_COPYD(BUCONF, ILUNCI)
+  CALL ACDC_COPY(TURBN)
+  CALL ACDC_COPY(NEBN)
+  CALL ACDC_COPY(TLES)
+  CALL ACDC_COPY(TPFILE)
 ENDIF
 
 !$ACC END DATA
@@ -552,14 +548,14 @@ OPEN (ILUNFI, NAME=TRIM (CLCASE_IN)//'/TURB.IN.dat',    FORM='UNFORMATTED')
 
 
 
-CALL LOAD(D, ILUNCI)
-CALL LOAD(CST, ILUNCI)
-CALL LOAD(CSTURB, ILUNCI)
-!CALL LOAD(BUCONF, ILUNCI)
-CALL LOAD(TURBN, ILUNCI)
-CALL LOAD(NEBN, ILUNCI)
-CALL LOAD(TLES, ILUNCI)
-CALL LOAD(TPFILE, ILUNCI)
+CALL ACDC_LOAD(D, ILUNCI)
+CALL ACDC_LOAD(CST, ILUNCI)
+CALL ACDC_LOAD(CSTURB, ILUNCI)
+!CALLACDC_ LOAD(BUCONF, ILUNCI)
+CALL ACDC_LOAD(TURBN, ILUNCI)
+CALL ACDC_LOAD(NEBN, ILUNCI)
+CALL ACDC_LOAD(TLES, ILUNCI)
+CALL ACDC_LOAD(TPFILE, ILUNCI)
 !CALL LOAD(TBUDGETS, ILUNCI)
 CALL LOAD(ILUNCI, KGRADIENTSLEO)
 CALL LOAD(ILUNCI, KGRADIENTSGOG)
@@ -785,13 +781,13 @@ OPEN (ILUNCI, NAME=TRIM (CLCASE_OUT)//'/TURB.CONST.dat', FORM='UNFORMATTED')
 OPEN (ILUNFI, NAME=TRIM (CLCASE_OUT)//'/TURB.IN.dat',    FORM='UNFORMATTED')
 
 
-CALL SAVE(D, ILUNCI)
-CALL SAVE(CST, ILUNCI)
-CALL SAVE(CSTURB, ILUNCI)
-!CALL SAVE(BUCONF, ILUNCI)
-CALL SAVE(TURBN, ILUNCI)
-CALL SAVE(NEBN, ILUNCI)
-CALL SAVE(TLES, ILUNCI)
+CALL ACDC_SAVE(D, ILUNCI)
+CALL ACDC_SAVE(CST, ILUNCI)
+CALL ACDC_SAVE(CSTURB, ILUNCI)
+!CALLACDC_ SAVE(BUCONF, ILUNCI)
+CALL ACDC_SAVE(TURBN, ILUNCI)
+CALL ACDC_SAVE(NEBN, ILUNCI)
+CALL ACDC_SAVE(TLES, ILUNCI)
 CALL SAVE(KGRADIENTSLEO, ILUNCI)
 CALL SAVE(KGRADIENTSGOG, ILUNCI)
 CALL SAVE(KRR, ILUNCI)
