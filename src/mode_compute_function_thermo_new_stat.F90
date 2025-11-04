@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_COMPUTE_FUNCTION_THERMO_NEW_STAT
+!$ACDC singlecolumn
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE COMPUTE_FUNCTION_THERMO_NEW_STAT (D, CST, PALP, PBETA, PGAM, PLTT, PC, PT, PEXN, PCP, &

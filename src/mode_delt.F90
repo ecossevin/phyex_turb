@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_DELT
+!$ACDC singlecolumn
 IMPLICIT NONE
 CONTAINS
   SUBROUTINE DELT (D,TURBN, O2D, ODZ, OOCEAN, PZZ, PDYY, PDXX, PDIRCOSZW, PLM)

@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_DEAR
+!$ACDC singlecolumn
 IMPLICIT NONE
 CONTAINS
   SUBROUTINE DEAR (D, CST, TURBN, KRR, KRRI, O2D, OCOMPUTE_SRC, OOCEAN, &

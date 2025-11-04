@@ -272,7 +272,7 @@ USE MODE_GRADIENT_V_PHY,      ONLY: GZ_V_VW_PHY
 USE MODE_GRADIENT_W_PHY,      ONLY: GZ_W_M_PHY
 USE MODE_GRADIENT_M_PHY,      ONLY: GZ_M_W_PHY
 USE MODE_IBM_MIXINGLENGTH,    ONLY: IBM_MIXINGLENGTH
-USE MODE_IO_FIELD_WRITE_PHY,      ONLY: IO_FIELD_WRITE_PHY
+!#USE MODE_IO_FIELD_WRITE_PHY,      ONLY: IO_FIELD_WRITE_PHY
 !#USE MODE_RMC01,               ONLY: RMC01
 !#USE MODE_ROTATE_WIND,         ONLY: ROTATE_WIND, UPDATE_ROTATE_WIND
 USE MODE_SBL_PHY,             ONLY: LMO
@@ -288,11 +288,12 @@ USE MODI_LES_MEAN_SUBGRID_PHY
 !#USE MODI_SECOND_MNH,          ONLY: SECOND_MNH
 !
 ! These macro are handled by pft_tool.py --craybyPassDOCONCURRENT applied on Cray Rules
-#ifdef MNH_COMPILER_CCE
-!$mnh_undef(LOOP)
-!$mnh_undef(OPENACC)
-#endif
+!##ifdef MNH_COMPILER_CCE
+!#!$mnh_undef(LOOP)
+!#!$mnh_undef(OPENACC)
+!##endif
 !
+!$ACDC singlecolumn
 IMPLICIT NONE
 !
 !
@@ -700,34 +701,34 @@ IF (KRRL >=1) THEN
   END IF
   !
   !
-  IF ( TPFILE%LOPENED .AND. TURBN%LTURB_DIAG ) THEN
-
-    TZFIELD = TFIELDMETADATA(      &
-      CMNHNAME   = 'ATHETA',       &
-      CSTDNAME   = '',             &
-      CLONGNAME  = 'ATHETA',       &
-      CUNITS     = 'm',            &
-      CDIR       = 'XY',           &
-      CCOMMENT   = 'X_Y_Z_ATHETA', &
-      NGRID      = 1,              &
-      NTYPE      = TYPEREAL,       &
-      NDIMS      = 3,              &
-      LTIMEDEP   = .TRUE.          )
-    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZATHETA)
-    !
-    TZFIELD = TFIELDMETADATA(      &
-      CMNHNAME   = 'AMOIST',       &
-      CSTDNAME   = '',             &
-      CLONGNAME  = 'AMOIST',       &
-      CUNITS     = 'm',            &
-      CDIR       = 'XY',           &
-      CCOMMENT   = 'X_Y_Z_AMOIST', &
-      NGRID      = 1,              &
-      NTYPE      = TYPEREAL,       &
-      NDIMS      = 3,              &
-      LTIMEDEP   = .TRUE.          )
-    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZAMOIST)
-  END IF
+!#  IF ( TPFILE%LOPENED .AND. TURBN%LTURB_DIAG ) THEN
+!#
+!#    TZFIELD = TFIELDMETADATA(      &
+!#      CMNHNAME   = 'ATHETA',       &
+!#      CSTDNAME   = '',             &
+!#      CLONGNAME  = 'ATHETA',       &
+!#      CUNITS     = 'm',            &
+!#      CDIR       = 'XY',           &
+!#      CCOMMENT   = 'X_Y_Z_ATHETA', &
+!#      NGRID      = 1,              &
+!#      NTYPE      = TYPEREAL,       &
+!#      NDIMS      = 3,              &
+!#      LTIMEDEP   = .TRUE.          )
+!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZATHETA)
+!#    !
+!#    TZFIELD = TFIELDMETADATA(      &
+!#      CMNHNAME   = 'AMOIST',       &
+!#      CSTDNAME   = '',             &
+!#      CLONGNAME  = 'AMOIST',       &
+!#      CUNITS     = 'm',            &
+!#      CDIR       = 'XY',           &
+!#      CCOMMENT   = 'X_Y_Z_AMOIST', &
+!#      NGRID      = 1,              &
+!#      NTYPE      = TYPEREAL,       &
+!#      NDIMS      = 3,              &
+!#      LTIMEDEP   = .TRUE.          )
+!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZAMOIST)
+!#  END IF
   !
 ELSE
 
@@ -1643,58 +1644,58 @@ ENDIF
 !          ---------------------------------------------------------
 !
 
-IF ( TURBN%LTURB_DIAG .AND. TPFILE%LOPENED ) THEN
-  !
-  ! stores the mixing length
-  !
-  TZFIELD = TFIELDMETADATA(       &
-    CMNHNAME   = 'LM',            &
-    CSTDNAME   = '',              &
-    CLONGNAME  = 'LM',            &
-    CUNITS     = 'm',             &
-    CDIR       = 'XY',            &
-    CCOMMENT   = 'Mixing length', &
-    NGRID      = 1,               &
-    NTYPE      = TYPEREAL,        &
-    NDIMS      = 3,               &
-    LTIMEDEP   = .TRUE.           )
-  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZLM)
-  !
-  IF (KRR /= 0) THEN
-    !
-    ! stores the conservative potential temperature
-    !
-    TZFIELD = TFIELDMETADATA(                          &
-    CMNHNAME   = 'THLM',                               &
-    CSTDNAME   = '',                                   &
-    CLONGNAME  = 'THLM',                               &
-    CUNITS     = 'K',                                  &
-    CDIR       = 'XY',                                 &
-    CCOMMENT   = 'Conservative potential temperature', &
-    NGRID      = 1,                                    &
-    NTYPE      = TYPEREAL,                             &
-    NDIMS      = 3,                                    &
-    LTIMEDEP   = .TRUE.                                )
-
-    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,PTHLT)
-    !
-    ! stores the conservative mixing ratio
-    !
-    TZFIELD = TFIELDMETADATA(                &
-    CMNHNAME   = 'RNPM',                     &
-    CSTDNAME   = '',                         &
-    CLONGNAME  = 'RNPM',                     &
-    CUNITS     = 'kg kg-1',                  &
-    CDIR       = 'XY',                       &
-    CCOMMENT   = 'Conservative mixing ratio',&
-    NGRID      = 1,                          &
-    NTYPE      = TYPEREAL,                   &
-    NDIMS      = 3,                          &
-    LTIMEDEP   = .TRUE.                      )
-
-    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,PRT(:,:,1))
-   END IF
-END IF
+!#IF ( TURBN%LTURB_DIAG .AND. TPFILE%LOPENED ) THEN
+!#  !
+!#  ! stores the mixing length
+!#  !
+!#  TZFIELD = TFIELDMETADATA(       &
+!#    CMNHNAME   = 'LM',            &
+!#    CSTDNAME   = '',              &
+!#    CLONGNAME  = 'LM',            &
+!#    CUNITS     = 'm',             &
+!#    CDIR       = 'XY',            &
+!#    CCOMMENT   = 'Mixing length', &
+!#    NGRID      = 1,               &
+!#    NTYPE      = TYPEREAL,        &
+!#    NDIMS      = 3,               &
+!#    LTIMEDEP   = .TRUE.           )
+!#  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZLM)
+!#  !
+!#  IF (KRR /= 0) THEN
+!#    !
+!#    ! stores the conservative potential temperature
+!#    !
+!#    TZFIELD = TFIELDMETADATA(                          &
+!#    CMNHNAME   = 'THLM',                               &
+!#    CSTDNAME   = '',                                   &
+!#    CLONGNAME  = 'THLM',                               &
+!#    CUNITS     = 'K',                                  &
+!#    CDIR       = 'XY',                                 &
+!#    CCOMMENT   = 'Conservative potential temperature', &
+!#    NGRID      = 1,                                    &
+!#    NTYPE      = TYPEREAL,                             &
+!#    NDIMS      = 3,                                    &
+!#    LTIMEDEP   = .TRUE.                                )
+!#
+!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,PTHLT)
+!#    !
+!#    ! stores the conservative mixing ratio
+!#    !
+!#    TZFIELD = TFIELDMETADATA(                &
+!#    CMNHNAME   = 'RNPM',                     &
+!#    CSTDNAME   = '',                         &
+!#    CLONGNAME  = 'RNPM',                     &
+!#    CUNITS     = 'kg kg-1',                  &
+!#    CDIR       = 'XY',                       &
+!#    CCOMMENT   = 'Conservative mixing ratio',&
+!#    NGRID      = 1,                          &
+!#    NTYPE      = TYPEREAL,                   &
+!#    NDIMS      = 3,                          &
+!#    LTIMEDEP   = .TRUE.                      )
+!#
+!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,PRT(:,:,1))
+!#   END IF
+!#END IF
 !
 PRSVS(:,:,:)        = ZWORKS(:,:,1:KSV)
 IF (OFLYER)   PWSV(:,:,:)=ZWORKWSV(:,:,1:KSV)
@@ -1702,7 +1703,7 @@ IF (OFLYER)   PWSV(:,:,:)=ZWORKWSV(:,:,1:KSV)
 IF(PRESENT(PDRUS_TURB)) THEN
   DO JK=1, IKT
     DO JIJ=IIJB, IIJE
-      PDRUS_TURB(JIJ, JK)   = PRUS(JIJ, JK) - PDRUS_TURB(JIJ, JK)
+      PDRUS_TURB(JIJ, JK)   = PRUS(JIJ, JK) - PDRUS_TURB(JIJ, JK) 
       PDRVS_TURB(JIJ, JK)   = PRVS(JIJ, JK) - PDRVS_TURB(JIJ, JK)
       PDRTHLS_TURB(JIJ, JK) = PRTHLS(JIJ, JK) - PDRTHLS_TURB(JIJ, JK)
       PDRRTS_TURB(JIJ, JK)  = PRRS(JIJ, JK, 1) - PDRRTS_TURB(JIJ, JK)
