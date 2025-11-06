@@ -11,7 +11,6 @@ module load $COMPILER
 module load gcc/9.2.0
 module load nvhpc/24.5
 
-#export PATH="$PWD/fxtran-acdc/bin":$PATH ; export PATH="$PWD/fxtran/bin":$PATH
-export PATH="/home/gmap/mrpm/marguina/fxtran-acdc/manyblockssection/bin":$PATH
-export PATH="/home/gmap/mrpm/marguina/fxtran/bin":$PATH
+export PATH="/home/gmap/mrpm/cossevine/fxtran-acdc/bin":$PATH
+export PATH="/home/gmap/mrpm/marguina/fxtran/master/bin":$PATH
 

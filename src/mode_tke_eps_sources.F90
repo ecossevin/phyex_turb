@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_TKE_EPS_SOURCES
+!$ACDC singlecolumn
 IMPLICIT NONE
 CONTAINS
       SUBROUTINE TKE_EPS_SOURCES(D,CST,CSTURB,TURBN,TLES,       &
@@ -618,9 +619,9 @@ END IF
 ! Storage in the LES configuration of the Dynamic Production of TKE and
 ! the dissipation of TKE 
 ! 
-IF (TLES%LLES_CALL ) THEN
-  CALL LES_MEAN_SUBGRID_PHY(D,TLES, PDISS, TLES%X_LES_SUBGRID_DISS_Tke )
-END IF
+!#IF (TLES%LLES_CALL ) THEN
+!#  CALL LES_MEAN_SUBGRID_PHY(D,TLES, PDISS, TLES%X_LES_SUBGRID_DISS_Tke )
+!#END IF
 !
 !----------------------------------------------------------------------------
 !

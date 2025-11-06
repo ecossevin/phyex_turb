@@ -4,7 +4,7 @@
 !MNH_LIC for details. version 1.
 !-----------------------------------------------------------------
 MODULE MODE_TURB_VER
-!###!$ACDC singlecolumn 
+!$ACDC singlecolumn 
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE TURB_VER(D,CST,CSTURB,TURBN,NEBN,TLES,                   &

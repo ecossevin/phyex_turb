@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 !
 MODULE MODE_IBM_MIXINGLENGTH
+!$ACDC singlecolumn
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE IBM_MIXINGLENGTH(D,PLM,PLEPS,PMU,PHI,PTKE)

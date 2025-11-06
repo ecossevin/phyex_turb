@@ -245,7 +245,15 @@ USE MODD_TURB_n,           ONLY: TURB_t
 !
 USE MODE_GRADIENT_W_PHY, ONLY: GZ_W_M_PHY
 USE MODE_IO_FIELD_WRITE_PHY, ONLY: IO_FIELD_WRITE_PHY
-USE MODE_PRANDTL
+USE MODE_PRANDTL, ONLY : D_M3_WR_W2R_O_DDRDZ, D_M3_WR_W2TH_O_DDRDZ, &
+& D_M3_WTH_W2R_O_DDTDZ, D_M3_WTH_W2TH_O_DDTDZ, D_M3_WTH_WR2_O_DDTDZ, &
+& D_M3_WTH_WTH2_O_DDTDZ, D_M3_WTH_WTHR_O_DDTDZ, D_PHI3DTDZ_O_DDTDZ, &
+& D_PSI3DRDZ_O_DDRDZ, M3_WR_W2R, M3_WR_W2TH, &
+& M3_WR_WR2, M3_WR_WTH2, M3_WR_WTHR, &
+& M3_WTH_W2R, M3_WTH_W2TH, M3_WTH_WR2, &
+& M3_WTH_WTH2, M3_WTH_WTHR, D_M3_WR_WR2_O_DDRDZ, &
+& D_M3_WR_WTH2_O_DDRDZ, D_M3_WR_WTHR_O_DDRDZ
+
 !#USE MODE_TM06_H,         ONLY: TM06_H
 USE MODE_TRIDIAG_THERMO, ONLY: TRIDIAG_THERMO
 !
@@ -772,22 +780,22 @@ IF ( OFLYER ) THEN
 
 END IF
 !
-!#IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
-!#
-!#  ! stores the conservative potential temperature vertical flux
-!#  TZFIELD = TFIELDMETADATA(                                         &
-!#   CMNHNAME   = 'THW_FLX',                                          &
-!#   CSTDNAME   = '',                                                 &
-!#   CLONGNAME  = 'THW_FLX',                                          &
-!#   CUNITS     = 'K m s-1',                                          &
-!#   CDIR       = 'XY',                                               &
-!#   CCOMMENT   = 'Conservative potential temperature vertical flux', &
-!#   NGRID      = 4,                                                  &
-!#   NTYPE      = TYPEREAL,                                           &
-!#   NDIMS      = 3,                                                  &
-!#   LTIMEDEP   = .TRUE.                                              )
-!#  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
-!#END IF
+IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
+
+  ! stores the conservative potential temperature vertical flux
+  TZFIELD = TFIELDMETADATA(                                         &
+   CMNHNAME   = 'THW_FLX',                                          &
+   CSTDNAME   = '',                                                 &
+   CLONGNAME  = 'THW_FLX',                                          &
+   CUNITS     = 'K m s-1',                                          &
+   CDIR       = 'XY',                                               &
+   CCOMMENT   = 'Conservative potential temperature vertical flux', &
+   NGRID      = 4,                                                  &
+   NTYPE      = TYPEREAL,                                           &
+   NDIMS      = 3,                                                  &
+   LTIMEDEP   = .TRUE.                                              )
+  CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
+END IF
 !
 ! Contribution of the conservative temperature flux to the buoyancy flux
 IF (OOCEAN) THEN
@@ -1300,22 +1308,22 @@ IF (KRR /= 0) THEN
 
   END IF
   !
-!#  IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
-!#
-!#    ! stores the conservative mixing ratio vertical flux
-!#    TZFIELD = TFIELDMETADATA(                                 &
-!#      CMNHNAME   = 'RCONSW_FLX',                              &
-!#      CSTDNAME   = '',                                        &
-!#      CLONGNAME  = 'RCONSW_FLX',                              &
-!#      CUNITS     = 'kg m s-1 kg-1',                           &
-!#      CDIR       = 'XY',                                      &
-!#      CCOMMENT   = 'Conservative mixing ratio vertical flux', &
-!#      NGRID      = 4,                                         &
-!#      NTYPE      = TYPEREAL,                                  &
-!#      NDIMS      = 3,                                         &
-!#      LTIMEDEP   = .TRUE.                                     )
-!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
-!#  END IF
+  IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
+
+    ! stores the conservative mixing ratio vertical flux
+    TZFIELD = TFIELDMETADATA(                                 &
+      CMNHNAME   = 'RCONSW_FLX',                              &
+      CSTDNAME   = '',                                        &
+      CLONGNAME  = 'RCONSW_FLX',                              &
+      CUNITS     = 'kg m s-1 kg-1',                           &
+      CDIR       = 'XY',                                      &
+      CCOMMENT   = 'Conservative mixing ratio vertical flux', &
+      NGRID      = 4,                                         &
+      NTYPE      = TYPEREAL,                                  &
+      NDIMS      = 3,                                         &
+      LTIMEDEP   = .TRUE.                                     )
+    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
+  END IF
   !
   ! Contribution of the conservative water flux to the Buoyancy flux
   IF (OOCEAN) THEN
@@ -1574,31 +1582,31 @@ END DO
 
   !
   ! store the liquid water mixing ratio vertical flux
-!#  IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
-!#
-!#    TZFIELD = TFIELDMETADATA(                                 &
-!#      CMNHNAME   = 'RCW_FLX',                                 &
-!#      CSTDNAME   = '',                                        &
-!#      CLONGNAME  = 'RCW_FLX',                                 &
-!#      CUNITS     = 'kg m s-1 kg-1',                           &
-!#      CDIR       = 'XY',                                      &
-!#      CCOMMENT   = 'Liquid water mixing ratio vertical flux', &
-!#      NGRID      = 4,                                         &
-!#      NTYPE      = TYPEREAL,                                  &
-!#      NDIMS      = 3,                                         &
-!#      LTIMEDEP   = .TRUE.                                     )
-!#    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
-!#  END IF
+  IF ( TURBN%LTURB_FLX .AND. TPFILE%LOPENED ) THEN
+
+    TZFIELD = TFIELDMETADATA(                                 &
+      CMNHNAME   = 'RCW_FLX',                                 &
+      CSTDNAME   = '',                                        &
+      CLONGNAME  = 'RCW_FLX',                                 &
+      CUNITS     = 'kg m s-1 kg-1',                           &
+      CDIR       = 'XY',                                      &
+      CCOMMENT   = 'Liquid water mixing ratio vertical flux', &
+      NGRID      = 4,                                         &
+      NTYPE      = TYPEREAL,                                  &
+      NDIMS      = 3,                                         &
+      LTIMEDEP   = .TRUE.                                     )
+    CALL IO_FIELD_WRITE_PHY(D,TPFILE,TZFIELD,ZFLXZ)
+  END IF
   !
 ! and we store in LES configuration this subgrid flux <w'rc'>
 !
-!#  IF (TLES%LLES_CALL) THEN
-!#    CALL SECOND_MNH(ZTIME1)
-!#    CALL MZF_PHY(D,ZFLXZ,ZWORK1)
-!#    CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1, TLES%X_LES_SUBGRID_WRc )
-!#    CALL SECOND_MNH(ZTIME2)
-!#    TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
-!#  END IF
+  !#IF (TLES%LLES_CALL) THEN
+  !#  CALL SECOND_MNH(ZTIME1)
+  !#  CALL MZF_PHY(D,ZFLXZ,ZWORK1)
+  !#  CALL LES_MEAN_SUBGRID_PHY(D,TLES,ZWORK1, TLES%X_LES_SUBGRID_WRc )
+  !#  CALL SECOND_MNH(ZTIME2)
+  !#  TLES%XTIME_LES = TLES%XTIME_LES + ZTIME2 - ZTIME1
+  !#END IF
 !
 END IF !end of <w Rc>
 !

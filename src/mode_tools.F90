@@ -70,26 +70,26 @@ interface Countjv
    end function Countjv3d
 end interface Countjv
 
-!##ifdef MNH_OPENACC
-!#public :: Countjv_device
-!#interface Countjv_device
-!#   subroutine Countjv1d_device(ltab, i1,ic)
-!#     logical, dimension(:), intent(in)  :: ltab ! Mask
-!#     integer, dimension(:), intent(out) :: i1   ! Positions of elements with 'true' value
-!#     integer,               intent(out) :: ic   ! Total number of 'true' values
-!#   end subroutine Countjv1d_device
-!#   subroutine Countjv2d_device(ltab, i1, i2, ic)
-!#     logical, dimension(:,:), intent(in)  :: ltab   ! Mask
-!#     integer, dimension(:),   intent(out) :: i1, i2 ! Positions of elements with 'true' value
-!#     integer,                 intent(out) :: ic     ! Total number of 'true' values
-!#   end subroutine Countjv2d_device
-!#   subroutine Countjv3d_device(ltab, i1, i2, i3, ic)
-!#     logical, dimension(:,:,:), intent(in)  :: ltab       ! Mask
-!#     integer, dimension(:),     intent(out) :: i1, i2, i3 ! Positions of elements with 'true' value
-!#     integer,                   intent(out) :: ic         ! Total number of 'true' values
-!#   end subroutine Countjv3d_device
-!#end interface
-!##endif
+#ifdef MNH_OPENACC
+public :: Countjv_device
+interface Countjv_device
+   subroutine Countjv1d_device(ltab, i1,ic)
+     logical, dimension(:), intent(in)  :: ltab ! Mask
+     integer, dimension(:), intent(out) :: i1   ! Positions of elements with 'true' value
+     integer,               intent(out) :: ic   ! Total number of 'true' values
+   end subroutine Countjv1d_device
+   subroutine Countjv2d_device(ltab, i1, i2, ic)
+     logical, dimension(:,:), intent(in)  :: ltab   ! Mask
+     integer, dimension(:),   intent(out) :: i1, i2 ! Positions of elements with 'true' value
+     integer,                 intent(out) :: ic     ! Total number of 'true' values
+   end subroutine Countjv2d_device
+   subroutine Countjv3d_device(ltab, i1, i2, i3, ic)
+     logical, dimension(:,:,:), intent(in)  :: ltab       ! Mask
+     integer, dimension(:),     intent(out) :: i1, i2, i3 ! Positions of elements with 'true' value
+     integer,                   intent(out) :: ic         ! Total number of 'true' values
+   end subroutine Countjv3d_device
+end interface
+#endif
 
 end module mode_tools
 
