@@ -2,6 +2,7 @@
      MODULE MODI_TURB  
 !    ################ 
 !
+!$ACDC singlecolumn
 IMPLICIT NONE
 INTERFACE
 !

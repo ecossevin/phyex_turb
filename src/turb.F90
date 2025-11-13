@@ -33,6 +33,7 @@
               & PIBM_LS, PIBM_XMUT,                                   &
               & PCURRENT_TKE_DISS, PSSTFL, PSSTFL_C, PSSRFL_C,        &
               & PSSUFL_C, PSSVFL_C,PSSUFL,PSSVFL                      )
+!$ACDC singlecolumn
 !     #################################################################
 !
 !
@@ -293,7 +294,6 @@ USE MODI_LES_MEAN_SUBGRID_PHY
 !$mnh_undef(OPENACC)
 #endif
 !
-!$ACDC singlecolumn
 IMPLICIT NONE
 !
 !
