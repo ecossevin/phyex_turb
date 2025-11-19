@@ -264,11 +264,11 @@ CLCASE_OUT = ''; CALL GETOPTION ("--case-out", CLCASE_OUT)
 CALL GETOPTION ("--verbose", LLVERBOSE)
 CALL GETOPTION ("--diff", LLDIFF)
 #ifdef PARKIND1_SINGLE
-ISIZE4 = 80;
+ISIZE4 = 120;
 ISIZE8 = 10;
 #else
 ISIZE4 = 10;
-ISIZE8 = 80;
+ISIZE8 = 120;
 #endif
 CALL GETOPTION ("--stack-size-4", ISIZE4)
 CALL GETOPTION ("--stack-size-8", ISIZE8)
@@ -394,12 +394,10 @@ CALL TURB(CST,CSTURB,TURBN,NEBN,D,TLES,            &
         D%NIJE=JLON
         D%NIB=JLON
         D%NIE=JLON
-        WRITE (0, *) __FILE__, ':', __LINE__
         YLSTACK%L8 = fxtran_acdc_stack_l8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%U8 = fxtran_acdc_stack_u8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%L4 = fxtran_acdc_stack_l4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%U4 = fxtran_acdc_stack_u4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
-        WRITE (0, *) __FILE__, ':', __LINE__
 
 CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
         & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
