@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -N1
-#SBATCH -p normal256
-#SBATCH --nodes=1
+#SBATCH -p ndl
 #SBATCH --time 00:10:00
+#SBATCH --gres=gpu:4
 #SBATCH --exclusive
-#SBATCH -p normal256,huge512,debug256,debug512
+#SBATCH --switches=3
 
 set -x
 
@@ -16,17 +16,19 @@ SUBMIT_DIR=./turb.$$
 mkdir $SUBMIT_DIR
 cd $SUBMIT_DIR
 
-#arch=gpu_nvhpc_d
-arch=cpu_intel_d
+arch=gpu_nvhpc_d_2
+#arch=cpu_intel_d
 
 ######test bon fonctionnement - petit
 #for method in openmp openmp_bitrepro openmpsinglecolumn openaccsinglecolumn
-for method in openmp 
+for method in openaccsinglecolumn 
 do
 ../compile.${arch}/main_turb.x \
   --case-in /scratch/work/cossevine/turb_data/small \
   --verbose  --diff  \
   --nproma 32        \
+  --ngpblks 1        \
+  --times 1          \
   --method $method > $method.txt 2>&1
 done
 

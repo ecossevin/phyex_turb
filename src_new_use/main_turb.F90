@@ -446,6 +446,77 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &
         & YDSTACK=YLSTACK)
       ENDDO !jlon
     ENDDO !jblk
+
+  ELSEIF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
+
+!$ACC PARALLEL LOOP GANG PRIVATE(JBLK) PRESENT(YFXTRAN_ACDC_STACK, &
+!$ACC& ZZDXX, ZZDYY, ZZDZZ, ZZDZX, ZZDZY, ZZZZ, ZZDIRCOSXW, &
+!$ACC& ZZDIRCOSYW, ZZDIRCOSZW, ZZCOSSLOPE, ZZSINSLOPE, ZZRHODJ,        &
+!$ACC& ZZTHVREF, ZZHGRADLEO, ZZHGRADGOG, ZZZS, ZZSFTH, ZZSFRV, ZZSFSV, &
+!$ACC& ZZSFU, ZZSFV, ZZPABST, ZZUT, ZZVT, ZZWT, ZZTKET, ZZSVT, ZZSRCT, &
+!$ACC& ZZLENGTHM, ZZLENGTHH, ZZFMOIST, ZZBL_DEPTH, ZZSBL_DEPTH, ZZCEI, &
+!$ACC& ZZTHLT, ZZRT, ZZRUS, ZZRVS, ZZRWS, ZZRTHLS, ZZRRS, ZZRSVS,      &
+!$ACC& ZZRTKES, ZZSIGS, ZZFLXZTHVMF, ZZFLXZUMF, ZZFLXZVMF, ZZWTH,      &
+!$ACC& ZZWSV, ZZDP, ZZTP, ZZTDIFF, ZZTDISS, ZZEDR, ZZDPMF, ZZTPMF,     &
+!$ACC& ZZDRUS_TURB, ZZDRVS_TURB, ZZDRTHLS_TURB, ZZDRRTS_TURB,          &
+!$ACC& ZZDRSVS_TURB) &
+!$ACC!VECTOR_LENGTH(NPROMA)
+    DO JBLK = 1, NGPBLKS
+!$ACC LOOP VECTOR &
+!$ACC&PRIVATE (JLON, D, YLSTACK)
+
+      DO JLON = 1,NPROMA
+        D%NIJB=JLON
+        D%NIJE=JLON
+        D%NIB=JLON
+        D%NIE=JLON
+        YLSTACK%L8 = fxtran_acdc_stack_l8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%U8 = fxtran_acdc_stack_u8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%L4 = fxtran_acdc_stack_l4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+        YLSTACK%U4 = fxtran_acdc_stack_u4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
+
+CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
+        & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
+        & KGRADIENTSGOG,KHALO,                                  &                 
+        & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
+        & KSV_LIMA_NR, KSV_LIMA_NS, KSV_LIMA_NG, KSV_LIMA_NH,   &                 
+        & O2D,ONOMIXLG,OFLAT,OCOUPLES,OBLOWSNOW,OIBM,OFLYER,    &                 
+        & OCOMPUTE_SRC, PRSNOW,                                 & 
+        & OOCEAN,ODEEPOC,ODIAG_IN_RUN,                          &
+        & HTURBLEN_CL,HCLOUD,HELEC,                             &
+        & PTSTEP,TPFILE,                                        &
+        & ZZDXX(:, :, JBLK), ZZDYY(:, :, JBLK), ZZDZZ(:, :, JBLK),  &
+        & ZZDZX(:, :, JBLK), ZZDZY(:, :, JBLK), ZZZZ(:, :, JBLK),  &
+        & ZZDIRCOSXW(:, JBLK), ZZDIRCOSYW(:, JBLK),  &
+        & ZZDIRCOSZW(:, JBLK), ZZCOSSLOPE(:, JBLK),  &
+        & ZZSINSLOPE(:, JBLK), ZZRHODJ(:, :, JBLK),  &
+        & ZZTHVREF(:, :, JBLK), ZZHGRADLEO(:, :, :, JBLK),  &
+        & ZZHGRADGOG(:, :, :, JBLK), ZZZS(:, JBLK), ZZSFTH(:, JBLK),  &
+        & ZZSFRV(:, JBLK), ZZSFSV(:, :, JBLK), ZZSFU(:, JBLK),  &
+        & ZZSFV(:, JBLK), ZZPABST(:, :, JBLK), ZZUT(:, :, JBLK),  &
+        & ZZVT(:, :, JBLK), ZZWT(:, :, JBLK), ZZTKET(:, :, JBLK),  &
+        & ZZSVT(:, :, :, JBLK), ZZSRCT(:, :, JBLK),  &
+        & ZZLENGTHM(:, :, JBLK), ZZLENGTHH(:, :, JBLK),  &
+        & ZZFMOIST(:, :, JBLK), ZZBL_DEPTH(:, JBLK),  &
+        & ZZSBL_DEPTH(:, JBLK), ZZCEI(:, :, JBLK),  &
+        & PCEI_MIN, PCEI_MAX, PCOEF_AMPL_SAT, &
+        & ZZTHLT(:, :, JBLK), ZZRT(:, :, :, JBLK), ZZRUS(:, :, JBLK),  &
+        & ZZRVS(:, :, JBLK), ZZRWS(:, :, JBLK), ZZRTHLS(:, :, JBLK),  &
+        & ZZRRS(:, :, :, JBLK), ZZRSVS(:, :, :, JBLK),  &
+        & ZZRTKES(:, :, JBLK), ZZSIGS(:, :, JBLK),  &
+        & ZZFLXZTHVMF(:, :, JBLK), ZZFLXZUMF(:, :, JBLK),  &
+        & ZZFLXZVMF(:, :, JBLK), ZZWTH(:, :, JBLK),  &
+        & ZZWRC(:, :, JBLK), ZZWSV(:, :, :, JBLK), ZZDP(:, :, JBLK),  &
+        & ZZTP(:, :, JBLK), ZZTDIFF(:, :, JBLK), ZZTDISS(:, :, JBLK),  &
+        & KBUDGETS, &
+        & PEDR=ZZEDR(:, :, JBLK), &
+        & PDPMF=ZZDPMF(:, :, JBLK),  &
+        & PTPMF=ZZTPMF(:, :, JBLK), PDRUS_TURB=ZZDRUS_TURB(:, :, JBLK),  &
+        & PDRVS_TURB=ZZDRVS_TURB(:, :, JBLK), PDRTHLS_TURB=ZZDRTHLS_TURB(:, :, JBLK),  &
+        & PDRRTS_TURB=ZZDRRTS_TURB(:, :, JBLK), PDRSVS_TURB=ZZDRSVS_TURB(:, :, :, JBLK), &
+        & YDSTACK=YLSTACK)
+      ENDDO !jlon
+    ENDDO !jblk
   ENDIF !method omp/acc 
 ENDDO !time
 
