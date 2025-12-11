@@ -404,6 +404,7 @@ GOCEAN= OOCEAN
 
 ZA(:,:)=XUNDEF
 PDP(:,:)=XUNDEF
+WRITE (0, *) "PDP10(1,1) = ", PDP(1,1)
 !
 ZSOURCE(:,:) = 0.
 ZFLXZ(:,:) = 0.
@@ -710,6 +711,7 @@ DO JK=1, IKT
     PDP(JIJ, JK) = - ZMZF2D_WORK1(JIJ, JK)
   END DO
 END DO
+WRITE (0, *) "PDP11(1,1) = ", PDP(1,1)
 
 !
 !
@@ -735,6 +737,7 @@ CALL MXF2D_PHY(D, ZSHUGRADWK1_1D, ZMXF1D_WORK1)
 DO JIJ=IIJB, IIJE
   PDP(JIJ, IKE) = - ZMXF1D_WORK1(JIJ) 
 END DO
+WRITE (0, *) "PDP12(1,1) = ", PDP(1,1)
 
 !
 ELSE ! Atmosphere
@@ -757,6 +760,7 @@ CALL MXF2D_PHY(D, ZSHUGRADWK1_1D, ZMXF1D_WORK1)
 DO JIJ=IIJB, IIJE
   PDP(JIJ, IKB) = - ZMXF1D_WORK1(JIJ)
 END DO
+WRITE (0, *) "PDP13(1,1) = ", PDP(1,1)
 
 !
 !
@@ -1394,6 +1398,7 @@ DO JK=1, IKT
     PDP(JIJ, JK)=PDP(JIJ, JK)+ZA(JIJ, JK)
   END DO
 END DO
+WRITE (0, *) "PDP14(1,1) = ", PDP(1,1)
 
 !
 ! Storage in the LES configuration

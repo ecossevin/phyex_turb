@@ -579,6 +579,7 @@ ENDIF
 !
 IF (TURBN%LHARAT) ZLM(:,:)=PLENGTHM(:,:)
 !
+WRITE (0, *) "mode_turb_ver.F90", ':', "582"
 CALL  TURB_VER_DYN_FLUX(D,CST,CSTURB,TURBN,TLES,KSV,O2D,OFLAT,      &
                       KRR,OOCEAN,OCOUPLES,                          &
                       PEXPL,PTSTEP,TPFILE,                          &
