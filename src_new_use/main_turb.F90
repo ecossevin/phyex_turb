@@ -77,7 +77,7 @@ IMPLICIT NONE
 !
 !
 !
-TYPE(DIMPHYEX_t)   :: D             ! PHYEX variables dimensions structure
+TYPE(DIMPHYEX_t)   :: D, DD             ! PHYEX variables dimensions structure
 TYPE(CST_t)   :: CST           ! modd_cst general constant structure
 TYPE(CSTURB_t)   :: CSTURB        ! modd_csturb turb constant structure
 !TYPE(TBUDGETCONF_t)   :: BUCONF        ! budget structure
@@ -449,7 +449,7 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &
 
   ELSEIF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
 
-!$ACC PARALLEL LOOP GANG PRIVATE(JBLK) PRESENT(YFXTRAN_ACDC_STACK, &
+!$ACC PARALLEL LOOP GANG PRIVATE(JBLK) PRESENT(D, YFXTRAN_ACDC_STACK, &
 !$ACC& ZZDXX, ZZDYY, ZZDZZ, ZZDZX, ZZDZY, ZZZZ, ZZDIRCOSXW, &
 !$ACC& ZZDIRCOSYW, ZZDIRCOSZW, ZZCOSSLOPE, ZZSINSLOPE, ZZRHODJ,        &
 !$ACC& ZZTHVREF, ZZHGRADLEO, ZZHGRADGOG, ZZZS, ZZSFTH, ZZSFRV, ZZSFSV, &
@@ -463,13 +463,14 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &
 !$ACC!VECTOR_LENGTH(NPROMA)
     DO JBLK = 1, NGPBLKS
 !$ACC LOOP VECTOR &
-!$ACC&PRIVATE (JLON, D, YLSTACK)
+!$ACC&PRIVATE (JLON, DD, YLSTACK)
 
       DO JLON = 1,NPROMA
-        D%NIJB=JLON
-        D%NIJE=JLON
-        D%NIB=JLON
-        D%NIE=JLON
+        DD=D
+        DD%NIJB=JLON
+        DD%NIJE=JLON
+        DD%NIB=JLON
+        DD%NIE=JLON
         YLSTACK%L8 = fxtran_acdc_stack_l8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%U8 = fxtran_acdc_stack_u8 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%L4 = fxtran_acdc_stack_l4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
