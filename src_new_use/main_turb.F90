@@ -476,7 +476,7 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &
         YLSTACK%L4 = fxtran_acdc_stack_l4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
         YLSTACK%U4 = fxtran_acdc_stack_u4 (YFXTRAN_ACDC_STACK, JBLK, NGPBLKS)
 
-CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
+CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,DD,TLES,            &                 
         & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
         & KGRADIENTSGOG,KHALO,                                  &                 
         & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
