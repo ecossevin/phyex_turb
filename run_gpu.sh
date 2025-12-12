@@ -16,7 +16,7 @@ SUBMIT_DIR=./turb.$$
 mkdir $SUBMIT_DIR
 cd $SUBMIT_DIR
 
-arch=gpu_nvhpc_d_2
+arch=gpu_nvhpc_d
 #arch=cpu_intel_d
 
 ######test bon fonctionnement - petit
