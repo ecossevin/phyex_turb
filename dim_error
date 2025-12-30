@@ -1,0 +1,41 @@
+  1 main_turb.F90                                      OK   
+  2 modd_budget.F90                                    OK?  
+  3 modd_dimphyex.F90                                  OK   
+  4 mode_bl89.F90                                      OK   
+  5 mode_cloud_modif_lm.F90                            OK   
+  6 mode_compute_function_thermo.F90                   OK   
+  7 mode_compute_function_thermo_new_stat.F90          OK   
+  8 mode_dear.F90                                      CALL MXF_PHY;  CALL MYF_PHY => on ne passe pas dedans
+  9 mode_delt.F90                                      OK   
+ 10 mode_emoist.F90                                    OK   
+ 11 mode_etheta.F90                                    OK   
+ 12 mode_prandtl.F90                                   GZ_M_W_PHY => On passe dedans; GX_M_M_        PHY => on ne passe pas dedans
+ 13 mode_sbl_phy.F90                                   OK   
+ 14 mode_shuman_phy.F90                                Opérateurs verticaux en NIJT, opérateu        rs horizontaux en NIT, NJT 
+ 15 mode_tke_eps_sources.F90                           OK   
+ 16 mode_tridiag_thermo.F90                            OK   
+ 17 mode_tridiag_tke.F90                               OK   
+ 18 mode_tridiag_wind.F90                              OK   
+ 19 mode_turb_ver_dyn_flux.F90                         MXM => On passe dedans; MXM2D_PHY => O
+ 20 n passe dedans; MYM_PHY => On passe dedans; GZ_V_VWPHY => On passe dedans; MYM2D => On pa
+ 21 sse dedans;  ... J'en ai peut être oublié...            
+ 22 mode_turb_ver.F90                                  GZ_M_W_PH => On passe dedans; CALL MODE_TURB_VER_THERMO_FLUX : PBL_DEPTH(D%NIJT) dans mode_turb_ver.F90 contre PBL_DEPTH(D%NIT, D%NJT) dans mode_turb_ver_thermo_flux.F90
+ 23 mode_turb_ver_sv_corr.F90                          OK   
+ 24 mode_turb_ver_thermo_corr.F90                      OK   
+ 25 mode_turb_ver_thermo_flux.F90                      CALL MXF_PHY => On ne passe pas dedans;       
+ 26 modi_get_halo.F90                                  OK   
+ 27 modi_turb.F90                                      OK   
+ ============================
+ 28 turb.F90                                           
+ 
+ GZ_U_UW_PHY => On ne passe pas dedans;     MXF_PHY => On ne passe pas dedans; GZ_V_VW_PHY => On ne passe pas dedans; 
+ CALL IBM_MIXINGLENGTH => dans mode_ibm_mixinglength D%NIT,D%NJT contre D%NIJT dans turb.F90 => On ne passe pas dedans
+ CALL SOURCES_NEG_CORRECT_PHY => dans mode_sources_neg_correct_phy, dimension en x et en y, contre x*y dans l'appel depuis turb. C'est une routine vide dans laquelle on passe.
+ CALL TURB_VER => 90 ème argument de dimension 0,0, alors que dimension NIJT, NKT
+ REAL, DIMENSION(D%NIJT,D%NKT,MERGE(KSV+KRR,KSV,TURBN%LTURB_PRECIP)) :: ZWORKWSV => dans turb.F90  
+ REAL, DIMENSION(MERGE(D%NIJT,0,OFLYER),MERGE(D%NKT,0,OFLYER),MERGE(KSV,0,OFLYER)),INTENT(OUT) :: PWSV       ! scalar flux  => dans mode_turb_ver.F90
+
+
+
+ ============================
+ 29 util_dimphyex_t_mod.F90   
