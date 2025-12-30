@@ -524,7 +524,7 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,DD,TLES,            &
     LLACC = .TRUE.
     YLOFFSET = FXTRAN_ACDC_STACK(0,0,0,0)
 
-    CALL TURB(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
+    CALL TURB_MANYBLOCKS(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
             & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
             & KGRADIENTSGOG,KHALO,                                  &                 
             & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
@@ -562,14 +562,15 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,DD,TLES,            &
             & PDPMF=ZZDPMF,  &
             & PTPMF=ZZTPMF, PDRUS_TURB=ZZDRUS_TURB,  &
             & PDRVS_TURB=ZZDRVS_TURB, PDRTHLS_TURB=ZZDRTHLS_TURB,  &
-            & PDRRTS_TURB=ZZDRRTS_TURB, PDRSVS_TURB=ZZDRSVS_TURB)
+            & PDRRTS_TURB=ZZDRRTS_TURB, PDRSVS_TURB=ZZDRSVS_TURB,  &
+            & LDACC=LLACC, KGPBLKS=NGPBLKS)
 
   ENDIF !method omp/acc 
 ENDDO !time
 
 CALL GET_TIME (TEC)
 
-IF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
+IF (TRIM (CLMETHOD) == 'openaccsinglecolumn' .OR. TRIM (CLMETHOD) == 'openaccmanyblocks') THEN
   CALL ACDC_COPY(D)
   CALL ACDC_COPY(CST)
   CALL ACDC_COPY(CSTURB)
