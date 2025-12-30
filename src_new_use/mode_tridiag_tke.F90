@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_TRIDIAG_TKE
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS       
 SUBROUTINE TRIDIAG_TKE(D,PVARM,PA,PTSTEP,PEXPL,PIMPL, &

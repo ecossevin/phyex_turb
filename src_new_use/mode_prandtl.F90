@@ -6,6 +6,7 @@
 !    #################### 
      MODULE MODE_PRANDTL
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 USE YOMHOOK , ONLY : LHOOK, DR_HOOK, JPHOOK
 !    #################### 
 !

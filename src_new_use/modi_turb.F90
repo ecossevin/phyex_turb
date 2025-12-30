@@ -3,6 +3,7 @@
 !    ################ 
 !
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 INTERFACE
 !

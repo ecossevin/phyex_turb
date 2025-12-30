@@ -239,6 +239,7 @@ CHARACTER*64 :: CLMETHOD
 INTEGER(KIND=JPIM) :: ITIME, NTIME
 LOGICAL :: LLSAVE, LLEXIST
 REAL(KIND=JPRB) :: TSC, TEC, TSD, TED, ZTC, ZTD
+LOGICAL :: LLACC
 
 #ifdef ARCH
 CHARACTER (LEN=*), PARAMETER :: CLARCH = ARCH
@@ -321,7 +322,7 @@ CALL GET_TIME (TSD)
 !$ACC& ZZDRUS_TURB, ZZDRVS_TURB, ZZDRTHLS_TURB, ZZDRRTS_TURB,          &
 !$ACC& ZZDRSVS_TURB) IF (TRIM (CLMETHOD) == 'openaccsinglecolumn')
 
-IF (TRIM (CLMETHOD) == 'openaccsinglecolumn') THEN
+IF (TRIM (CLMETHOD) == 'openaccsinglecolumn' .OR. TRIM (CLMETHOD) == 'openaccmanyblocks') THEN
   CALL ACDC_COPY(D)
   CALL ACDC_COPY(CST)
   CALL ACDC_COPY(CSTURB)
@@ -518,6 +519,51 @@ CALL TURB_OPENACC(CST,CSTURB,TURBN,NEBN,DD,TLES,            &
         & YDSTACK=YLSTACK)
       ENDDO !jlon
     ENDDO !jblk
+  ELSEIF (TRIM (CLMETHOD) == 'openaccmanyblocks') THEN
+  
+    LLACC = .TRUE.
+    YLOFFSET = FXTRAN_ACDC_STACK(0,0,0,0)
+
+    CALL TURB(CST,CSTURB,TURBN,NEBN,D,TLES,            &                 
+            & KRR,KRRL,KRRI,HLBCX,HLBCY,KGRADIENTSLEO,              &                 
+            & KGRADIENTSGOG,KHALO,                                  &                 
+            & KSPLIT, OCLOUDMODIFLM, KSV,KSV_LGBEG,KSV_LGEND,       &                 
+            & KSV_LIMA_NR, KSV_LIMA_NS, KSV_LIMA_NG, KSV_LIMA_NH,   &                 
+            & O2D,ONOMIXLG,OFLAT,OCOUPLES,OBLOWSNOW,OIBM,OFLYER,    &                 
+            & OCOMPUTE_SRC, PRSNOW,                                 & 
+            & OOCEAN,ODEEPOC,ODIAG_IN_RUN,                          &
+            & HTURBLEN_CL,HCLOUD,HELEC,                             &
+            & PTSTEP,TPFILE,                                        &
+            & ZZDXX, ZZDYY, ZZDZZ,  &
+            & ZZDZX, ZZDZY, ZZZZ,  &
+            & ZZDIRCOSXW, ZZDIRCOSYW,  &
+            & ZZDIRCOSZW, ZZCOSSLOPE,  &
+            & ZZSINSLOPE, ZZRHODJ,  &
+            & ZZTHVREF, ZZHGRADLEO,  &
+            & ZZHGRADGOG, ZZZS, ZZSFTH,  &
+            & ZZSFRV, ZZSFSV, ZZSFU,  &
+            & ZZSFV, ZZPABST, ZZUT,  &
+            & ZZVT, ZZWT, ZZTKET,  &
+            & ZZSVT, ZZSRCT,  &
+            & ZZLENGTHM, ZZLENGTHH,  &
+            & ZZFMOIST, ZZBL_DEPTH,  &
+            & ZZSBL_DEPTH, ZZCEI,  &
+            & PCEI_MIN, PCEI_MAX, PCOEF_AMPL_SAT, &
+            & ZZTHLT, ZZRT, ZZRUS,  &
+            & ZZRVS, ZZRWS, ZZRTHLS,  &
+            & ZZRRS, ZZRSVS,  &
+            & ZZRTKES, ZZSIGS,  &
+            & ZZFLXZTHVMF, ZZFLXZUMF,  &
+            & ZZFLXZVMF, ZZWTH,  &
+            & ZZWRC, ZZWSV, ZZDP,  &
+            & ZZTP, ZZTDIFF, ZZTDISS,  &
+            & KBUDGETS, &
+            & PEDR=ZZEDR, &
+            & PDPMF=ZZDPMF,  &
+            & PTPMF=ZZTPMF, PDRUS_TURB=ZZDRUS_TURB,  &
+            & PDRVS_TURB=ZZDRVS_TURB, PDRTHLS_TURB=ZZDRTHLS_TURB,  &
+            & PDRRTS_TURB=ZZDRRTS_TURB, PDRSVS_TURB=ZZDRSVS_TURB)
+
   ENDIF !method omp/acc 
 ENDDO !time
 

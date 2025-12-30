@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_TKE_EPS_SOURCES
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
       SUBROUTINE TKE_EPS_SOURCES(D,CST,CSTURB,TURBN,TLES,       &

@@ -35,6 +35,7 @@
               & PSSUFL_C, PSSVFL_C,PSSUFL,PSSVFL                      )
 !     #################################################################
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 !
 !
 !!****  *TURB* - computes the turbulent source terms for the prognostic

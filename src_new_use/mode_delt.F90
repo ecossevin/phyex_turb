@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_DELT
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
   SUBROUTINE DELT (D,TURBN, O2D, ODZ, OOCEAN, PZZ, PDYY, PDXX, PDIRCOSZW, PLM)

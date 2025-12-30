@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_TURB_VER_DYN_FLUX
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE TURB_VER_DYN_FLUX(D,CST,CSTURB,TURBN,TLES,KSV,O2D,OFLAT, &

@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_CLOUD_MODIF_LM
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
   SUBROUTINE CLOUD_MODIF_LM (D, CST, CSTURB, TURBN, TPFILE, TZFIELD, KRR, KRRI, &

@@ -1,5 +1,6 @@
 MODULE MODE_GRADIENT_U_PHY
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 !     #######################################################

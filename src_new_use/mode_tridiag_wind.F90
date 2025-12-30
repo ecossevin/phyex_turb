@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_TRIDIAG_WIND
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS       
 SUBROUTINE TRIDIAG_WIND(D,PVARM,PA,PCOEFS,PTSTEP,PEXPL,PIMPL, &

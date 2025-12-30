@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_COMPUTE_FUNCTION_THERMO
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE COMPUTE_FUNCTION_THERMO (D, CST, PALP, PBETA, PGAM, PLTT, PC, PT, PEXN, PCP, &

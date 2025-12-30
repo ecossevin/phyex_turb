@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_EMOIST
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE EMOIST(D,CST,KRR,KRRI,PTHLM,PRM,PLOCPEXNM,PAMOIST,PSRCM,OOCEAN,PEMOIST)

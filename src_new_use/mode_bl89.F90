@@ -4,6 +4,7 @@
 !MNH_LIC for details. version 1.
 MODULE MODE_BL89
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20 --parallel-iterator-list=JKK
 IMPLICIT NONE
 CONTAINS
 !     ######spl

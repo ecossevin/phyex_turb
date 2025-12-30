@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_DEAR
 !$ACDC singlecolumn
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
   SUBROUTINE DEAR (D, CST, TURBN, KRR, KRRI, O2D, OCOMPUTE_SRC, OOCEAN, &

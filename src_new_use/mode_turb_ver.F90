@@ -5,6 +5,7 @@
 !-----------------------------------------------------------------
 MODULE MODE_TURB_VER
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 SUBROUTINE TURB_VER(D,CST,CSTURB,TURBN,NEBN,TLES,                   &

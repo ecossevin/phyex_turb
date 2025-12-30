@@ -1,5 +1,6 @@
 MODULE MODE_SHUMAN_PHY
 !$ACDC singlecolumn 
+!$ACDC manyblocks --max-statements-per-parallel=20
 IMPLICIT NONE
 CONTAINS
 !     ###############################
